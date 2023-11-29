@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSerializer, CategoryPostSerializer,
-    CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer)
+    CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer)
 from notemarketplace.decorators import super_admin_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
@@ -198,8 +198,6 @@ class NoteCategories(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_category}, status=status.HTTP_200_OK)
         except Country.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        
-
 
 # Note Type
 class NoteTypes(APIView):
@@ -219,4 +217,55 @@ class NoteTypes(APIView):
             serialized_types = TypeGetSerializer(all_types, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_types}, status=status.HTTP_200_OK)
  
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="post category")
+    def post(self, request, format=None):
+        serializer = TypePostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.validated_data['created_by'] = request.user
+            serializer.validated_data['modified_by'] = request.user
+            serializer.validated_data['created_date'] = timezone.now()
+            serializer.validated_data['modified_date'] = timezone.now()
+            type = serializer.save()
 
+            serialized_type = TypePostSerializer(type).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_type}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="update category")
+    def put(self, request, type_id, format=None):
+        try:
+            type = NoteType.objects.get(id=type_id)
+            serializer = TypePostSerializer(type, data=request.data)
+            if serializer.is_valid():
+                serializer.validated_data['modified_by'] = request.user
+                serializer.validated_data['modified_date'] = timezone.now()
+                type_save = serializer.save()
+
+                serialized_type = TypePostSerializer(type_save).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_type}, status=status.HTTP_200_OK)
+            else:
+                return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
+        except Country.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="delete category")
+    def delete(self, request, type_id, format=None):
+        try:
+            type = NoteType.objects.get(id=type_id)
+            type.is_active = False
+            type.modified_by = request.user
+            type.modified_date = timezone.now()
+            type.save()
+
+            serialized_type = TypeGetSerializer(type).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_type}, status=status.HTTP_200_OK)
+        except Country.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        

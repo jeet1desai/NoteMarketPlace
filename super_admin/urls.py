@@ -23,7 +23,7 @@ urlpatterns = [
     # note type
     path('types/', views.NoteTypes.as_view(), name="types get"),
     path('type/<int:type_id>/', views.NoteTypes.as_view(), name="type get"),
-    # path('country_post/', views.Countries.as_view(), name="country post"),
-    # path('country_put/<int:country_id>/', views.Countries.as_view(), name="country update"),
-    # path('country_delete/<int:country_id>/', views.Countries.as_view(), name="country delete"),
+    path('type_post/', views.NoteTypes.as_view(), name="type post"),
+    path('type_put/<int:type_id>/', views.NoteTypes.as_view(), name="type update"),
+    path('type_delete/<int:type_id>/', views.NoteTypes.as_view(), name="type delete"),
 ]

@@ -106,3 +106,18 @@ class TypeGetSerializer(serializers.ModelSerializer):
         representation['created_by'] = UserSerializer(instance.created_by).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
         return representation
+
+class TypePostSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=True)
+    description = serializers.CharField(required=True)
+
+    class Meta:
+        model = NoteType
+        fields = '__all__'
+        extra_kwargs = {'created_by': {'required': False}, 'created_date': {'required': False}, 'modified_date': {'required': False}, 'modified_by': {'required': False}}
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        return representation
