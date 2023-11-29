@@ -24,6 +24,9 @@ class Country(models.Model):
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=False, blank=False, related_name='modified_countries')
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return f"{self.name} {self.code}"
+
 class NoteCategory(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True, null=False)
@@ -33,6 +36,9 @@ class NoteCategory(models.Model):
     modified_date = models.DateTimeField()
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=False, blank=False, related_name='modified_note_categories')
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name}"
 
     def save(self, *args, **kwargs):
         if not self.id:  # If the instance is being created
@@ -49,6 +55,9 @@ class NoteType(models.Model):
     modified_date = models.DateTimeField()
     modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=False, blank=False, related_name='modified_note_types')
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name}"
 
     def save(self, *args, **kwargs):
         if not self.id:  # If the instance is being created

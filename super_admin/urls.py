@@ -8,6 +8,9 @@ urlpatterns = [
     # admin
     path('admins/', views.Admin.as_view(), name="admins get"),
     path('admin/<int:admin_id>/', views.Admin.as_view(), name="admin get"),
+    path('admin_post/', views.Admin.as_view(), name="admin post"),
+    path('admin_put/<int:admin_id>/', views.Admin.as_view(), name="admin update"),
+    path('admin_delete/<int:admin_id>/', views.Admin.as_view(), name="admin delete"),
     # country
     path('countries/', views.Countries.as_view(), name="countries get"),
     path('country/<int:country_id>/', views.Countries.as_view(), name="country get"),

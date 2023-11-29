@@ -6,10 +6,14 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSerializer, CategoryPostSerializer,
-    CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer)
+    CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer, 
+    AdminPostSerializer, AdminPutSerializer)
 from notemarketplace.decorators import super_admin_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from notemarketplace import utils
+import secrets
+import string
 
 # Create your views here.
 # Config
@@ -59,6 +63,76 @@ class Admin(APIView):
             serialized_admins = AdminGetSerializer(all_admins, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_admins}, status=status.HTTP_200_OK)
         
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="post admin")
+    def post(self, request, format=None):
+        serializer = AdminPostSerializer(data=request.data)
+        if serializer.is_valid():
+            phone_country_code = serializer.validated_data.pop('phone_country_code')
+            country_instance = Country.objects.get(id=phone_country_code)
+
+            random_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
+
+            serializer.validated_data['phone_country_code'] = country_instance
+            serializer.validated_data['profile_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+            serializer.validated_data['created_by'] = request.user
+            serializer.validated_data['modified_by'] = request.user
+            serializer.validated_data['created_date'] = timezone.now()
+            serializer.validated_data['modified_date'] = timezone.now()
+            serializer.validated_data['role_id'] = 2
+            serializer.validated_data['password'] = random_password
+
+            user_instance = serializer.save()
+            serialized_admin = AdminGetSerializer(user_instance).data
+
+            utils.send_welcome_mail(random_password, serialized_admin["email"])
+            utils.send_email_verification_mail(serialized_admin["id"], serialized_admin["email"])
+
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_admin}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="update country")
+    def put(self, request, admin_id, format=None):
+        try:
+            admin = User.objects.get(id=admin_id)
+            serializer = AdminPutSerializer(admin, data=request.data)
+            if serializer.is_valid():
+                phone_country_code = serializer.validated_data.pop('phone_country_code')
+                country_instance = Country.objects.get(id=phone_country_code)
+
+                serializer.validated_data['phone_country_code'] = country_instance
+                serializer.validated_data['modified_by'] = request.user
+                serializer.validated_data['modified_date'] = timezone.now()
+                admin_save = serializer.save()
+
+                serialized_admin = AdminGetSerializer(admin_save).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_admin}, status=status.HTTP_200_OK)
+            else:
+                return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
+        except Country.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(super_admin_required, name="delete admin")
+    def delete(self, request, admin_id, format=None):
+        try:
+            admin = User.objects.get(id=admin_id)
+            admin.is_active = False
+            admin.modified_by = request.user
+            admin.modified_date = timezone.now()
+            admin.save()
+
+            serialized_country = AdminGetSerializer(admin).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_country}, status=status.HTTP_200_OK)
+        except Country.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+        
+
 # Country
 class Countries(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -203,7 +277,7 @@ class NoteCategories(APIView):
 class NoteTypes(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="get note category")
+    @method_decorator(super_admin_required, name="get note type")
     def get(self, request, type_id=None, format=None):
         if type_id is not None:
             try:
@@ -219,7 +293,7 @@ class NoteTypes(APIView):
  
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="post category")
+    @method_decorator(super_admin_required, name="post type")
     def post(self, request, format=None):
         serializer = TypePostSerializer(data=request.data)
         if serializer.is_valid():
@@ -236,7 +310,7 @@ class NoteTypes(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="update category")
+    @method_decorator(super_admin_required, name="update type")
     def put(self, request, type_id, format=None):
         try:
             type = NoteType.objects.get(id=type_id)
@@ -255,7 +329,7 @@ class NoteTypes(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="delete category")
+    @method_decorator(super_admin_required, name="delete type")
     def delete(self, request, type_id, format=None):
         try:
             type = NoteType.objects.get(id=type_id)

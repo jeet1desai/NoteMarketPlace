@@ -39,9 +39,57 @@ class AdminGetSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['phone_country_code'] = CountrySerializer(instance.phone_country_code).data
         return representation
 
+class AdminPostSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    phone_country_code = serializers.IntegerField(required=True)
+    phone_number = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "password", "email", "is_email_verified", "role_id", "profile_picture", "is_active", "created_date", "phone_country_code", "phone_number"]
+        extra_kwargs = {'password': {'required': False}}
+
+    def validate(self, attrs):
+        email_value = attrs.get("email")
+        country_code_value = attrs.get("phone_country_code")
+
+        if User.objects.filter(email=email_value).exists():
+            raise serializers.ValidationError("Email already exists.")
+        
+        if not Country.objects.filter(id=country_code_value).exists():
+            raise serializers.ValidationError("Country code not exists.")
+
+        return attrs
+
+class AdminPutSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    phone_country_code = serializers.IntegerField(required=True)
+    phone_number = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "first_name", "last_name", "password", "email", "is_email_verified", "role_id", "profile_picture", "is_active", "created_date", "phone_country_code", "phone_number"]
+        extra_kwargs = {'password': {'required': False}}
+
+    def validate(self, attrs):
+        country_code_value = attrs.get("phone_country_code")
+        if not Country.objects.filter(id=country_code_value).exists():
+            raise serializers.ValidationError("Country code not exists.")
+        return attrs
+
 # Country
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Country
+        fields = ["id", "name", "code"]
+
 class CountryGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
