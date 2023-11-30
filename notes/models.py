@@ -6,6 +6,7 @@ from authenticate.models import User
 class SellerNotes(models.Model):
     STATUS_CHOICES = (
         (1, 'Draft'),
+        (2, 'In Review'),
     )
 
     id = models.AutoField(primary_key=True)
@@ -26,9 +27,9 @@ class SellerNotes(models.Model):
     file_name = models.CharField(max_length=100, null=False, blank=False)
     file = models.CharField(max_length=500, null=False, blank=False)
     file_size = models.IntegerField(default=0)
-    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING)
-    note_type = models.ForeignKey(NoteType, on_delete=models.DO_NOTHING)
-    category = models.ForeignKey(NoteCategory, on_delete=models.DO_NOTHING)
+    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, related_name='country_notes', null=True)
+    note_type = models.ForeignKey(NoteType, on_delete=models.DO_NOTHING, related_name='note_notes', null=True)
+    category = models.ForeignKey(NoteCategory, on_delete=models.DO_NOTHING, related_name='category_notes')
     seller = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='seller_notes')
     actioned_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='actioned_notes')
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_notes')

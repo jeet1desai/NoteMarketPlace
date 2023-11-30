@@ -117,6 +117,11 @@ class CountryPostSerializer(serializers.ModelSerializer):
         return representation
 
 # Note Category
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NoteCategory
+        fields = ["id", "name", "description"]
+
 class CategoryGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = NoteCategory
@@ -144,6 +149,11 @@ class CategoryPostSerializer(serializers.ModelSerializer):
         return representation
 
 # Note Type
+class NoteTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NoteType
+        fields = ["id", "name", "description"]
+
 class TypeGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = NoteType

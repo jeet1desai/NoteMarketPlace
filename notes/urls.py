@@ -3,5 +3,5 @@ from . import views
 
 urlpatterns = [
     # config
-    # path('config_get/', views.Configuration.as_view(), name="config get"),
+    path('create_note/', views.Note.as_view(), name="create Note"),
 ]
