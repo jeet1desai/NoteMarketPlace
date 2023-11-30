@@ -15,7 +15,6 @@ from notemarketplace import utils
 import secrets
 import string
 
-# Create your views here.
 # Config
 class Configuration(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -42,7 +41,7 @@ class Configuration(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_config}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
-    
+
 # Admin
 class Admin(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -131,7 +130,6 @@ class Admin(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_country}, status=status.HTTP_200_OK)
         except Country.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        
 
 # Country
 class Countries(APIView):
@@ -202,7 +200,7 @@ class Countries(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_country}, status=status.HTTP_200_OK)
         except Country.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        
+
 # Note Category
 class NoteCategories(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -342,4 +340,3 @@ class NoteTypes(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_type}, status=status.HTTP_200_OK)
         except Country.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
-        

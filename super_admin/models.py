@@ -40,12 +40,6 @@ class NoteCategory(models.Model):
     def __str__(self):
         return f"{self.name}"
 
-    def save(self, *args, **kwargs):
-        if not self.id:  # If the instance is being created
-            self.CreatedDate = timezone.now()
-        self.ModifiedDate = timezone.now()
-        super().save(*args, **kwargs)
-
 class NoteType(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True, null=False)
@@ -58,11 +52,5 @@ class NoteType(models.Model):
 
     def __str__(self):
         return f"{self.name}"
-
-    def save(self, *args, **kwargs):
-        if not self.id:  # If the instance is being created
-            self.CreatedDate = timezone.now()
-        self.ModifiedDate = timezone.now()
-        super().save(*args, **kwargs)
 
 

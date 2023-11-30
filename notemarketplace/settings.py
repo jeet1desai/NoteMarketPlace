@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "corsheaders",
 
     'super_admin',
+    'notes',
 ]
 
 MIDDLEWARE = [
