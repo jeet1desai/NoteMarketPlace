@@ -22,3 +22,9 @@ def send_welcome_mail(password, email):
     message = f'password: {password}'
     recipient_list = [email]
     send_custom_email(subject, message, recipient_list)
+
+def send_contact_us_mail(data):
+    subject = data.get('subject')
+    message = f'name: {data.get("full_name")} \nemail: {data.get("user_email")} \n\ncomment: {data.get("comment")}'
+    recipient_list = [data.get('email'), data.get('user_email')]
+    send_custom_email(subject, message, recipient_list)
