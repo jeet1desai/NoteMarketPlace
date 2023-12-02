@@ -6,7 +6,10 @@ from authenticate.models import User
 class SellerNotes(models.Model):
     STATUS_CHOICES = (
         (1, 'Draft'),
-        (2, 'In Review'),
+        (2, 'Submitted'),
+        (3, 'In Review'),
+        (4, 'Approved'),
+        (5, 'Rejected'),
     )
 
     id = models.AutoField(primary_key=True)

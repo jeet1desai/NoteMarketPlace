@@ -57,3 +57,15 @@ class NotePostPutSerializer(serializers.ModelSerializer):
         if country != "" and not Country.objects.filter(id=int(country)).exists():
             raise serializers.ValidationError("Country is not exists.")
         return attrs
+    
+class CloneNoteSerializer(serializers.Serializer):
+    note_id = serializers.IntegerField()
+
+    def validate(self, attrs):
+        note_id = attrs.get("note_id")
+
+        if not SellerNotes.objects.filter(id=note_id).exists():
+            raise serializers.ValidationError("Note is not exists.")
+        if not SellerNotes.objects.filter(id=note_id, status=5).exists():
+            raise serializers.ValidationError("Note is not in rejected state.")
+        return attrs
