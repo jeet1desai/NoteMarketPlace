@@ -27,3 +27,14 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "first_name", "last_name"]
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        exclude = ["password", "is_superuser", "is_staff", "user_permissions"]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        return representation

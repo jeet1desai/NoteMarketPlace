@@ -3,12 +3,14 @@ from notemarketplace import renderers
 from rest_framework.response import Response
 from rest_framework import status
 from super_admin.models import SystemConfigurations
-from .serializers import (ContactUsSerializer, CountrySerializer, CategorySerializer, NoteTypeSerializer)
+from .serializers import (ContactUsSerializer, CountrySerializer, CategorySerializer, NoteTypeSerializer,
+                          UserProfileSerializer)
 from notemarketplace import utils
 from rest_framework.permissions import IsAuthenticated
 from notemarketplace.decorators import normal_required
 from django.utils.decorators import method_decorator
 from super_admin.models import Country, NoteCategory, NoteType
+from authenticate.models import User
 
 class ContactUs(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -58,5 +60,17 @@ class CountryList(APIView):
         serialized_country = CountrySerializer(all_country, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_country}, status=status.HTTP_200_OK)
     
+class ProfileDetails(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="get profile details")
+    def get(self, request, user_id, format=None):
+        try:
+            user = User.objects.get(id=user_id)
+            serialized_user = UserProfileSerializer(user).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
+    
 
