@@ -20,7 +20,6 @@ def admin_required(view_func):
     return _wrapped_view
 
 def normal_required(view_func):
-    # @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if request.user.role_id in [1, 2, 3]:
             return view_func(request, *args, **kwargs)

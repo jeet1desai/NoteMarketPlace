@@ -1,12 +1,7 @@
 from rest_framework import serializers
 from .models import SystemConfigurations, Country, NoteCategory, NoteType
 from authenticate.models import User
-
-# User
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "first_name", "last_name"]
+from user.serializers import UserSerializer
 
 # Config
 class ConfigGetSerializer(serializers.ModelSerializer):
@@ -85,11 +80,6 @@ class AdminPutSerializer(serializers.ModelSerializer):
         return attrs
 
 # Country
-class CountrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Country
-        fields = ["id", "name", "code"]
-
 class CountryGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
@@ -117,11 +107,6 @@ class CountryPostSerializer(serializers.ModelSerializer):
         return representation
 
 # Note Category
-class CategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NoteCategory
-        fields = ["id", "name", "description"]
-
 class CategoryGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = NoteCategory
@@ -149,11 +134,6 @@ class CategoryPostSerializer(serializers.ModelSerializer):
         return representation
 
 # Note Type
-class NoteTypeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = NoteType
-        fields = ["id", "name", "description"]
-
 class TypeGetSerializer(serializers.ModelSerializer):
     class Meta:
         model = NoteType

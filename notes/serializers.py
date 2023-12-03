@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import SellerNotes
 from super_admin.models import Country, NoteCategory, NoteType
-from super_admin.serializers import UserSerializer, CountrySerializer, NoteTypeSerializer, CategorySerializer
+from user.serializers import CategorySerializer, NoteTypeSerializer, CountrySerializer, UserSerializer
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
