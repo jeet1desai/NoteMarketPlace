@@ -9,4 +9,8 @@ urlpatterns = [
     path('published_note', views.PublishedNote.as_view(), name="published Note"),
     path('rejected_note', views.RejectedNote.as_view(), name="rejected Note"),
     path('clone_note/', views.CloneNoteView.as_view(), name="clone Note"),
+    
+    # note detail (with review), user note (except draft), note list (with all search and filter)
+    # download (free), download (paid), stats, buyer request (allow download), my download list
+    # add review, my sold note, 
 ]

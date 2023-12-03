@@ -10,6 +10,7 @@ class SellerNotes(models.Model):
         (3, 'In Review'),
         (4, 'Approved'),
         (5, 'Rejected'),
+        (6, 'Removed'),
     )
 
     id = models.AutoField(primary_key=True)
