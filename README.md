@@ -5,6 +5,7 @@ django-admin startproject "project_name"
 python manage.py startapp "app_name"
 
 pip freeze > requirements.txt
+pip install -r requirements.txt
 
 <!-- Run -->
 python manage.py runserver
