@@ -4,13 +4,14 @@ from rest_framework.response import Response
 from rest_framework import status
 from super_admin.models import SystemConfigurations
 from .serializers import (ContactUsSerializer, CountrySerializer, CategorySerializer, NoteTypeSerializer,
-                          UserProfileSerializer)
+                          UserProfileSerializer, UserProfileUpdateSerializer, AdminProfileUpdateSerializer)
 from notemarketplace import utils
 from rest_framework.permissions import IsAuthenticated
-from notemarketplace.decorators import normal_required
+from notemarketplace.decorators import normal_required, admin_required
 from django.utils.decorators import method_decorator
 from super_admin.models import Country, NoteCategory, NoteType
 from authenticate.models import User
+from django.utils import timezone
 
 class ContactUs(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -72,5 +73,59 @@ class ProfileDetails(APIView):
         except User.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
-    
+class UserProfileUpdate(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="update user profile")
+    def put(self, request, format=None):
+        try:
+            user = User.objects.get(id=request.user.id)
+            serializer = UserProfileUpdateSerializer(user, data=request.data, context={'user':user})
+            if serializer.is_valid():
+                country_code = serializer.validated_data.pop('phone_country_code')
+                country = serializer.validated_data.pop('country')
+
+                country_code_instance = Country.objects.get(id=int(country_code)) if country_code != "" else None
+                country_instance = Country.objects.get(id=int(country))
+
+                serializer.validated_data['modified_date'] = timezone.now()
+                serializer.validated_data['modified_by'] = user
+                serializer.validated_data['phone_country_code'] = country_code_instance
+                serializer.validated_data['country'] = country_instance
+
+                updated_user = serializer.save()
+                serialized_user = UserProfileSerializer(updated_user).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+class AdminProfileUpdate(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="update admin profile")
+    def put(self, request, format=None):
+        try:
+            user = User.objects.get(id=request.user.id)
+            serializer = AdminProfileUpdateSerializer(user, data=request.data, context={'user':user})
+            if serializer.is_valid():
+                country_code = serializer.validated_data.pop('phone_country_code')
+
+                country_code_instance = Country.objects.get(id=int(country_code)) if country_code != "" else None
+
+                serializer.validated_data['modified_date'] = timezone.now()
+                serializer.validated_data['modified_by'] = user
+                serializer.validated_data['phone_country_code'] = country_code_instance
+
+                updated_user = serializer.save()
+                serialized_user = UserProfileSerializer(updated_user).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 

@@ -2,13 +2,11 @@
 # We can do this by declaring serializers that work very similar to Django's forms.
 from rest_framework import serializers
 from .models import User
-from django.utils import timezone
 
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "first_name", "last_name", "password", "email", "is_email_verified", "role_id", "profile_picture", "is_active", "modified_date", "created_date"]
-        # fields = '__all__'
         extra_kwargs = {'role_id': {'required': False}, 'created_date': {'required': False}}
 
     def validate(self, attrs):
