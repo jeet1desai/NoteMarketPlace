@@ -30,5 +30,5 @@ urlpatterns = [
     path('type_put/<int:type_id>/', views.NoteTypes.as_view(), name="type update"),
     path('type_delete/<int:type_id>/', views.NoteTypes.as_view(), name="type delete"),
 
-    # Search in all get api
+    # Search in type and country
 ]

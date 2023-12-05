@@ -11,9 +11,11 @@ from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSer
 from notemarketplace.decorators import super_admin_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
+from datetime import datetime
 from notemarketplace import utils
 import secrets
 import string
+from django.db.models import Q
 
 # Config
 class Configuration(APIView):
@@ -55,10 +57,23 @@ class Admin(APIView):
                 serialized_admin = AdminGetSerializer(admin).data
                 return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_admin}, status=status.HTTP_200_OK)
             except User.DoesNotExist:
-                return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Error"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not found"}, status=status.HTTP_404_NOT_FOUND)
         else:
             # Get all rows logic
+            search_param = request.query_params.get('search', '').lower()
             all_admins = User.objects.filter(role_id=2)
+
+            if search_param:
+                try:
+                    search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                    all_admins = all_admins.filter(created_date__date=search_date.date())
+                except ValueError:  
+                    all_admins = all_admins.filter(
+                        Q(first_name__icontains=search_param) | Q(created_date__icontains=search_param) |
+                        Q(last_name__icontains=search_param) | Q(email__icontains=search_param) | 
+                        Q(phone_number__icontains=search_param)
+                    )
+            
             serialized_admins = AdminGetSerializer(all_admins, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_admins}, status=status.HTTP_200_OK)
         
@@ -215,7 +230,21 @@ class NoteCategories(APIView):
             except NoteCategory.DoesNotExist:
                 return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Error"}, status=status.HTTP_404_NOT_FOUND)
         else:
+            search_param = request.query_params.get('search', '').lower()
+            print(search_param)
             all_category = NoteCategory.objects.all()
+
+            if search_param:
+                try:
+                    search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                    all_category = all_category.filter(created_date__date=search_date.date())
+                except ValueError:  
+                    all_category = all_category.filter(
+                        Q(name__icontains=search_param) | Q(created_date__icontains=search_param) |
+                        Q(description__icontains=search_param) | Q(created_by__first_name__icontains=search_param) | 
+                        Q(created_by__last_name__icontains=search_param)
+                    )
+                                
             serialized_category = CategoryGetSerializer(all_category, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_category}, status=status.HTTP_200_OK)
 

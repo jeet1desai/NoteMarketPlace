@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import SystemConfigurations, Country, NoteCategory, NoteType
 from authenticate.models import User
-from user.serializers import UserSerializer
+from user.serializers import UserSerializer, CountrySerializer
 
 # Config
 class ConfigGetSerializer(serializers.ModelSerializer):
