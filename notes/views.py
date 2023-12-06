@@ -212,6 +212,8 @@ class DownloadNote(APIView):
                 )
                 utils.send_buyer_download_mail(user, seller_user, original_note)
                 utils.send_seller_download_mail(seller_user, user, original_note)
+                serializer_download_note = DownloadNoteSerializer(download_note).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': 'Please check my download page', 'data': serializer_download_note}, status=status.HTTP_200_OK)
             else:
                 download_note = Downloads.objects.create(
                     is_seller_has_allowed_to_download=True,
@@ -223,8 +225,8 @@ class DownloadNote(APIView):
                     seller=seller_user,
                     downloader=user
                 )
-            serializer_download_note = DownloadNoteSerializer(download_note).data
-            return Response({ 'status': status.HTTP_200_OK, 'msg': serializer_download_note}, status=status.HTTP_200_OK)
+                serializer_download_note = DownloadNoteSerializer(download_note).data
+                return Response({ 'status': status.HTTP_200_OK, 'msg': 'Seller will contact you.', 'data': serializer_download_note}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 

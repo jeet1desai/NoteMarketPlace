@@ -30,7 +30,7 @@ class ContactUs(APIView):
                     'comment': request.data.get('comment'),
                 }
                 utils.send_contact_us_mail(data)
-                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success" }, status=status.HTTP_200_OK)
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': data }, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
 
