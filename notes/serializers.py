@@ -80,6 +80,8 @@ class DownloadNoteSerializer(serializers.Serializer):
 
         if not SellerNotes.objects.filter(id=note_id).exists():
             raise serializers.ValidationError("Note is not exists.")
+        if SellerNotes.objects.filter(id=note_id, created_by=user).exists():
+            raise serializers.ValidationError("You cannot download your own note.")
         if Downloads.objects.filter(note_id=note_id, downloader=user).exists():
             raise serializers.ValidationError("You have already purchased it.")
         return attrs

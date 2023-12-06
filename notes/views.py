@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from notemarketplace import renderers
+from notemarketplace import renderers, utils
 from rest_framework.permissions import IsAuthenticated
 from django.utils.decorators import method_decorator
 from notemarketplace.decorators import normal_required
@@ -210,6 +210,8 @@ class DownloadNote(APIView):
                     seller=seller_user,
                     downloader=user
                 )
+                utils.send_buyer_download_mail(user, seller_user, original_note)
+                utils.send_seller_download_mail(seller_user, user, original_note)
             else:
                 download_note = Downloads.objects.create(
                     is_seller_has_allowed_to_download=True,

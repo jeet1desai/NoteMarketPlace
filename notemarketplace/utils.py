@@ -28,3 +28,15 @@ def send_contact_us_mail(data):
     message = f'name: {data.get("full_name")} \nemail: {data.get("user_email")} \n\ncomment: {data.get("comment")}'
     recipient_list = [data.get('email'), data.get('user_email')]
     send_custom_email(subject, message, recipient_list)
+
+def send_buyer_download_mail(user, seller_user, original_note):
+    subject = f"Purchased book: {original_note.title}"
+    message = f'As this is paid note - seller will contact you for payment \nSeller email: {seller_user.email}'
+    recipient_list = [user.email]
+    send_custom_email(subject, message, recipient_list)
+
+def send_seller_download_mail(user, buyer_user, original_note):
+    subject = f"{buyer_user.first_name} {buyer_user.last_name} wants to purchase your notes"
+    message = f'Note: {original_note.title} \nAllow download access to Buyer if you have received the payment from him.'
+    recipient_list = [user.email]
+    send_custom_email(subject, message, recipient_list)
