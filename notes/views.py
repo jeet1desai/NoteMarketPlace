@@ -7,18 +7,18 @@ from notemarketplace.decorators import normal_required
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer)
+from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer)
 from super_admin.models import Country, NoteCategory, NoteType
-from .models import SellerNotes
+from .models import SellerNotes, Downloads
+from authenticate.models import User
 from django.db.models import Q
 from datetime import datetime
 
-# Create your views here.
 class Note(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
     @method_decorator(normal_required, name="create note")
-    def post(self, request, status, format=None):
+    def post(self, request, uStatus, format=None):
         serializer = NotePostPutSerializer(data=request.data)
         if serializer.is_valid():
             category = serializer.validated_data.pop('category')
@@ -35,7 +35,7 @@ class Note(APIView):
             else:
                 serializer.validated_data['display_picture'] = display_picture
             
-            serializer.validated_data['status'] = status
+            serializer.validated_data['status'] = uStatus
             serializer.validated_data['category'] = category_instance
             serializer.validated_data['country'] = country_instance
             serializer.validated_data['note_type'] = type_instance
@@ -48,14 +48,14 @@ class Note(APIView):
 
             note_instance = serializer.save()
             serialized_note = NoteSerializer(note_instance).data
-            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_201_CREATED)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
     
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
     @method_decorator(normal_required, name="update note")
-    def put(self, request, note_id, status, format=None):
+    def put(self, request, note_id, uStatus, format=None):
         try:
             note = SellerNotes.objects.get(id=note_id)
             serializer = NotePostPutSerializer(note, data=request.data)
@@ -74,7 +74,7 @@ class Note(APIView):
                 else:
                     serializer.validated_data['display_picture'] = display_picture
                 
-                serializer.validated_data['status'] = status
+                serializer.validated_data['status'] = uStatus
                 serializer.validated_data['category'] = category_instance
                 serializer.validated_data['country'] = country_instance
                 serializer.validated_data['note_type'] = type_instance
@@ -190,3 +190,44 @@ class CloneNoteView(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serializer_note }, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+        
+class DownloadNote(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="download note")
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = DownloadNoteSerializer(data=request.data, context={'user': user})
+        if serializer.is_valid():
+            note_id = serializer.validated_data['note_id']
+            original_note = SellerNotes.objects.get(id=note_id)
+            seller_user = User.objects.get(id=original_note.created_by.id)
+            if original_note.is_paid:
+                download_note = Downloads.objects.create(
+                    note=original_note,
+                    created_by=user,
+                    modified_by=user,
+                    seller=seller_user,
+                    downloader=user
+                )
+            else:
+                download_note = Downloads.objects.create(
+                    is_seller_has_allowed_to_download=True,
+                    is_attachment_downloaded=True,
+                    attachment_downloaded_date=timezone.now(),
+                    note=original_note,
+                    created_by=user,
+                    modified_by=user,
+                    seller=seller_user,
+                    downloader=user
+                )
+            serializer_download_note = DownloadNoteSerializer(download_note).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': serializer_download_note}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
+

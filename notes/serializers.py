@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import SellerNotes
+from .models import SellerNotes, Downloads
 from super_admin.models import Country, NoteCategory, NoteType
 from user.serializers import CategorySerializer, NoteTypeSerializer, CountrySerializer, UserSerializer
 
@@ -10,6 +10,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation.pop('file', None)
         representation['created_by'] = UserSerializer(instance.created_by).data
         if instance.country:
             representation['country'] = CountrySerializer(instance.country).data
@@ -69,3 +70,25 @@ class CloneNoteSerializer(serializers.Serializer):
         if not SellerNotes.objects.filter(id=note_id, status=5).exists():
             raise serializers.ValidationError("Note is not in rejected state.")
         return attrs
+
+class DownloadNoteSerializer(serializers.Serializer):
+    note_id = serializers.IntegerField()
+
+    def validate(self, attrs):
+        note_id = attrs.get("note_id")
+        user = self.context.get("user")
+
+        if not SellerNotes.objects.filter(id=note_id).exists():
+            raise serializers.ValidationError("Note is not exists.")
+        if Downloads.objects.filter(note_id=note_id, downloader=user).exists():
+            raise serializers.ValidationError("You have already purchased it.")
+        return attrs
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['note'] = NoteSerializer(instance.note).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        representation['seller'] = UserSerializer(instance.seller).data
+        representation['downloader'] = UserSerializer(instance.downloader).data
+        return representation

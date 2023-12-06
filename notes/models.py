@@ -48,11 +48,8 @@ class SellerNotes(models.Model):
 class Downloads(models.Model):
     id = models.AutoField(primary_key=True)
     is_seller_has_allowed_to_download = models.BooleanField(default=False)
-    attachment_path = models.CharField(max_length=500, null=True, blank=True)
     is_attachment_downloaded = models.BooleanField(default=False)
     attachment_downloaded_date = models.DateTimeField(null=True, blank=True)
-    is_paid = models.BooleanField(default=False)
-    purchased_price = models.IntegerField(default=0)
     created_date = models.DateTimeField(default=timezone.now)
     modified_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
     note = models.ForeignKey(SellerNotes, on_delete=models.DO_NOTHING)

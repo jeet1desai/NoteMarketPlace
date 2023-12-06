@@ -36,6 +36,7 @@ class User(AbstractUser):
     groups = None
     last_login = None
     date_joined = None
+    id = models.AutoField(primary_key=True)
     role_id = models.PositiveSmallIntegerField(choices=ROLE_CHOICES, default=3)
     email = models.EmailField(unique=True)
     is_email_verified = models.BooleanField(default=False)

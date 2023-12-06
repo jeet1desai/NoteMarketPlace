@@ -19,7 +19,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        data.pop('Password', None)
+        data.pop('password', None)
         return data
     
     def create(self, validated_data):
