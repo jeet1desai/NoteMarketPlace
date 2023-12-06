@@ -17,3 +17,7 @@ python manage.py createsuperuser
 <!-- Make Migration -->
 python manage.py makemigrations
 python manage.py migrate
+
+<!-- Virtual Env -->
+virtualenv env
+. env/bin/activate

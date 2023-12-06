@@ -29,6 +29,4 @@ urlpatterns = [
     path('type_post/', views.NoteTypes.as_view(), name="type post"),
     path('type_put/<int:type_id>/', views.NoteTypes.as_view(), name="type update"),
     path('type_delete/<int:type_id>/', views.NoteTypes.as_view(), name="type delete"),
-
-    # Search in type and country
 ]

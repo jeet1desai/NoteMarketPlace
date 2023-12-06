@@ -160,7 +160,20 @@ class Countries(APIView):
             except Country.DoesNotExist:
                 return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
         else:
+            search_param = request.query_params.get('search', '').lower()
             all_countries = Country.objects.all()
+
+            if search_param:
+                try:
+                    search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                    all_countries = all_countries.filter(created_date__date=search_date.date())
+                except ValueError:  
+                    all_countries = all_countries.filter(
+                        Q(name__icontains=search_param) | Q(created_date__icontains=search_param) |
+                        Q(code__icontains=search_param) | Q(created_by__first_name__icontains=search_param) | 
+                        Q(created_by__last_name__icontains=search_param)
+                    )
+            
             serialized_countries = CountryGetSerializer(all_countries, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_countries}, status=status.HTTP_200_OK)
     
@@ -231,7 +244,6 @@ class NoteCategories(APIView):
                 return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Error"}, status=status.HTTP_404_NOT_FOUND)
         else:
             search_param = request.query_params.get('search', '').lower()
-            print(search_param)
             all_category = NoteCategory.objects.all()
 
             if search_param:
@@ -314,7 +326,20 @@ class NoteTypes(APIView):
             except NoteType.DoesNotExist:
                 return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Error"}, status=status.HTTP_404_NOT_FOUND)
         else:
+            search_param = request.query_params.get('search', '').lower()
             all_types = NoteType.objects.all()
+
+            if search_param:
+                try:
+                    search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                    all_types = all_types.filter(created_date__date=search_date.date())
+                except ValueError:  
+                    all_types = all_types.filter(
+                        Q(name__icontains=search_param) | Q(created_date__icontains=search_param) |
+                        Q(description__icontains=search_param) | Q(created_by__first_name__icontains=search_param) | 
+                        Q(created_by__last_name__icontains=search_param)
+                    )
+            
             serialized_types = TypeGetSerializer(all_types, many=True).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_types}, status=status.HTTP_200_OK)
  

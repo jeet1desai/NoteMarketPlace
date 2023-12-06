@@ -49,7 +49,7 @@ class User(AbstractUser):
     city = models.CharField(max_length=50, null=True, blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
     zip_code = models.CharField(max_length=50, null=True, blank=True)
-    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, related_name='country_user', null=True)
+    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING, related_name='country_user', null=True, blank=True)
     university = models.CharField(max_length=100, null=True, blank=True)
     college = models.CharField(max_length=100, null=True, blank=True)
     created_date = models.DateTimeField(default=timezone.now)
