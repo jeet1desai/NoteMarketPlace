@@ -70,9 +70,23 @@ class CloneNoteSerializer(serializers.Serializer):
         if not SellerNotes.objects.filter(id=note_id, status=5).exists():
             raise serializers.ValidationError("Note is not in rejected state.")
         return attrs
+    
+class DownloadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Downloads
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['note'] = NoteSerializer(instance.note).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        representation['seller'] = UserSerializer(instance.seller).data
+        representation['downloader'] = UserSerializer(instance.downloader).data
+        return representation
 
 class DownloadNoteSerializer(serializers.Serializer):
-    note_id = serializers.IntegerField()
+    note_id = serializers.IntegerField(required=True)
 
     def validate(self, attrs):
         note_id = attrs.get("note_id")
@@ -86,11 +100,13 @@ class DownloadNoteSerializer(serializers.Serializer):
             raise serializers.ValidationError("You have already purchased it.")
         return attrs
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['created_by'] = UserSerializer(instance.created_by).data
-        representation['note'] = NoteSerializer(instance.note).data
-        representation['modified_by'] = UserSerializer(instance.modified_by).data
-        representation['seller'] = UserSerializer(instance.seller).data
-        representation['downloader'] = UserSerializer(instance.downloader).data
-        return representation
+class BuyerRequestSerializer(serializers.Serializer):
+    download_id = serializers.IntegerField(required=True)
+
+    def validate(self, attrs):
+        download_id = attrs.get("download_id")
+        user = self.context.get("user")
+
+        if not Downloads.objects.filter(id=download_id, seller=user).exists():
+            raise serializers.ValidationError("Request not exist.")
+        return attrs

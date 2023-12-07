@@ -7,7 +7,8 @@ from notemarketplace.decorators import normal_required
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer)
+from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer,
+    BuyerRequestSerializer, DownloadSerializer)
 from super_admin.models import Country, NoteCategory, NoteType
 from .models import SellerNotes, Downloads
 from authenticate.models import User
@@ -230,8 +231,64 @@ class DownloadNote(APIView):
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
+class BuyerRequests(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="buyer request")
+    def get(self, request, *args, **kwargs):
+        search_param = request.query_params.get('search', '').lower()
+        user = self.request.user
+
+        buyer_request_notes = Downloads.objects.filter(
+            seller=user, 
+            is_seller_has_allowed_to_download=False,
+            note__is_paid=True
+        )
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                buyer_request_notes = buyer_request_notes.filter(created_date__date=search_date.date())
+            except ValueError:
+                sell_type_mapping = {'paid': False, 'free': True}
+                if search_param in sell_type_mapping:
+                    sell_type_value = sell_type_mapping[search_param]
+                    buyer_request_notes = buyer_request_notes.filter(note__is_paid=sell_type_value)
+                else:
+                    buyer_request_notes = buyer_request_notes.filter(
+                        Q(note__title__icontains=search_param) |
+                        Q(created_date__icontains=search_param) |
+                        Q(note__category__name__icontains=search_param) |
+                        Q(downloader__email__icontains=search_param) |
+                        Q(downloader__phone_country_code__code__icontains=str(search_param)) |
+                        Q(downloader__phone_number__icontains=str(search_param)) |
+                        Q(note__selling_price__icontains=search_param)
+                    )
+
+        serialized_buyer_request = DownloadSerializer(buyer_request_notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_buyer_request}, status=status.HTTP_200_OK)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="buyer request update")
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        serializer = BuyerRequestSerializer(data=request.data, context={'user': user})
+        if serializer.is_valid():
+            download_id = serializer.validated_data['download_id']
+
+            note_instance = Downloads.objects.get(id=download_id)
+            note_instance.is_seller_has_allowed_to_download = True
+            note_instance.modified_by = user
+            note_instance.modified_date = timezone.now()
+            note_instance.save()
+            serialized_note = DownloadSerializer(note_instance).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
 
+        
 
 
 
