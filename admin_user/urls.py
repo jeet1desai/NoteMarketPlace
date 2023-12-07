@@ -9,6 +9,7 @@ urlpatterns = [
     path('update_status/', views.NoteUpdateStatus.as_view(), name="update status"),
     path('update_remark_status/', views.NoteUpdateRemarkStatus.as_view(), name="update status; remark"),
 
-    # member, delete review, stats, 2 published note, all download notes, all rejected note
-    # deactivate member
+    path('members/', views.Members.as_view(), name="members"),
+
+    # deactivate member, delete review, stats, 2 published note, all download notes, all rejected note
 ]

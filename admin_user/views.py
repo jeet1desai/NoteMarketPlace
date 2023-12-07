@@ -9,9 +9,12 @@ from rest_framework import status
 from django.db.models import Q
 from datetime import datetime
 from django.utils import timezone
-from notes.models import SellerNotes
+from notes.models import SellerNotes, Downloads
+from authenticate.models import User
 from notes.serializers import NoteSerializer
 from .serializers import (UpdateStatusSerializer, UpdateStatusRemarkSerializer)
+from user.serializers import UserProfileSerializer
+from django.db.models import Sum
 
 class NoteUnderReview(ListAPIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -108,3 +111,44 @@ class NoteUpdateRemarkStatus(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+
+class Members(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="members")
+    def get(self, request, *args, **kwargs): 
+        search_param = request.query_params.get('search', '').lower()
+        notes = User.objects.filter(role_id=3, is_active=True)
+        serialized_user = UserProfileSerializer(notes, many=True).data
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                notes = notes.filter(created_date__date=search_date.date())
+            except ValueError:
+                notes = notes.filter(
+                    Q(first_name__icontains=search_param) | Q(last_name__icontains=search_param) | 
+                    Q(email__icontains=search_param)     
+                )
+
+        for user_data in serialized_user:
+            user_id = user_data['id']
+            # note user review
+            notes_under_review_count = SellerNotes.objects.filter(seller_id=user_id, status=3).count()
+            user_data['notes_under_review'] = notes_under_review_count
+            # note published
+            notes_published_count = SellerNotes.objects.filter(seller_id=user_id, status=4).count()
+            user_data['notes_published_notes'] = notes_published_count
+            # note downloaded
+            total_downloaded_notes_count = Downloads.objects.filter(seller_id=user_id, is_attachment_downloaded=True).count()
+            user_data['total_downloaded_notes'] = total_downloaded_notes_count
+            # total expense
+            total_selling_price = SellerNotes.objects.filter(seller_id=user_id, status=4).aggregate(total=Sum('selling_price'))['total']
+            user_data['total_selling_price'] = total_selling_price or 0
+            # total earning
+            total_downloaded_notes_price = Downloads.objects.filter(seller_id=user_id, is_attachment_downloaded=True).aggregate(total=Sum('note__selling_price'))['total']
+            total_downloaded_notes_price = total_downloaded_notes_price or 0
+            total_earnings = total_selling_price + total_downloaded_notes_price
+            user_data['total_earnings'] = total_earnings
+
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
