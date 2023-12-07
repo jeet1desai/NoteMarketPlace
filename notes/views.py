@@ -209,7 +209,8 @@ class DownloadNote(APIView):
                     created_by=user,
                     modified_by=user,
                     seller=seller_user,
-                    downloader=user
+                    downloader=user,
+                    attachment_downloaded_date=timezone.now(),
                 )
                 utils.send_buyer_download_mail(user, seller_user, original_note)
                 utils.send_seller_download_mail(seller_user, user, original_note)
@@ -240,15 +241,14 @@ class BuyerRequests(APIView):
         user = self.request.user
 
         buyer_request_notes = Downloads.objects.filter(
-            seller=user, 
+            seller=user, note__is_paid=True,
             is_seller_has_allowed_to_download=False,
-            note__is_paid=True
         )
 
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
-                buyer_request_notes = buyer_request_notes.filter(created_date__date=search_date.date())
+                buyer_request_notes = buyer_request_notes.filter(attachment_downloaded_date__date=search_date.date())
             except ValueError:
                 sell_type_mapping = {'paid': False, 'free': True}
                 if search_param in sell_type_mapping:
@@ -257,7 +257,7 @@ class BuyerRequests(APIView):
                 else:
                     buyer_request_notes = buyer_request_notes.filter(
                         Q(note__title__icontains=search_param) |
-                        Q(created_date__icontains=search_param) |
+                        Q(attachment_downloaded_date__icontains=search_param) |
                         Q(note__category__name__icontains=search_param) |
                         Q(downloader__email__icontains=search_param) |
                         Q(downloader__phone_country_code__code__icontains=str(search_param)) |
@@ -287,7 +287,71 @@ class BuyerRequests(APIView):
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
+class MySoldNotes(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="my sold note")
+    def get(self, request, *args, **kwargs):
+        search_param = request.query_params.get('search', '').lower()
+        user = self.request.user
 
+        my_sold_notes = Downloads.objects.filter(
+            seller=user, is_seller_has_allowed_to_download=True,
+        )
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                my_sold_notes = my_sold_notes.filter(attachment_downloaded_date__date=search_date.date())
+            except ValueError:
+                sell_type_mapping = {'paid': False, 'free': True}
+                if search_param in sell_type_mapping:
+                    sell_type_value = sell_type_mapping[search_param]
+                    my_sold_notes = my_sold_notes.filter(note__is_paid=sell_type_value)
+                else:
+                    my_sold_notes = my_sold_notes.filter(
+                        Q(note__title__icontains=search_param) |
+                        Q(note__category__name__icontains=search_param) |
+                        Q(downloader__email__icontains=search_param) |
+                        Q(attachment_downloaded_date__icontains=search_param) |
+                        Q(note__selling_price__icontains=search_param)
+                    )
+
+        serialized_sold_notes = DownloadSerializer(my_sold_notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_sold_notes}, status=status.HTTP_200_OK)
+
+class MyDownloadNotes(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="my download note")
+    def get(self, request, *args, **kwargs):
+        search_param = request.query_params.get('search', '').lower()
+        user = self.request.user
+
+        my_download_notes = Downloads.objects.filter(
+            downloader=user, is_seller_has_allowed_to_download=True,
+        )
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                my_download_notes = my_download_notes.filter(attachment_downloaded_date__date=search_date.date())
+            except ValueError:
+                sell_type_mapping = {'paid': False, 'free': True}
+                if search_param in sell_type_mapping:
+                    sell_type_value = sell_type_mapping[search_param]
+                    my_download_notes = my_download_notes.filter(note__is_paid=sell_type_value)
+                else:
+                    my_download_notes = my_download_notes.filter(
+                        Q(note__title__icontains=search_param) |
+                        Q(note__category__name__icontains=search_param) |
+                        Q(downloader__email__icontains=search_param) |
+                        Q(attachment_downloaded_date__icontains=search_param) |
+                        Q(note__selling_price__icontains=search_param)
+                    )
+
+        serialized_download_notes = DownloadSerializer(my_download_notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_download_notes}, status=status.HTTP_200_OK)
         
 
 

@@ -15,8 +15,10 @@ urlpatterns = [
 
     path('buyer_request/', views.BuyerRequests.as_view(), name="buyer request"),
     path('buyer_request/', views.BuyerRequests.as_view(), name="buyer request update"),
+
+    path('my_sold_note/', views.MySoldNotes.as_view(), name="my sold note"),
+    path('my_download_note/', views.MyDownloadNotes.as_view(), name="my download note"),
     
     # note detail (with review), user note (except draft), note list (with all search and filter)
-    # stats, my download list
-    # add review, my sold note, 
+    # stats, add review
 ]
