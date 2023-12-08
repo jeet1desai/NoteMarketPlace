@@ -15,7 +15,6 @@ class SellerNotes(models.Model):
 
     id = models.AutoField(primary_key=True)
     admin_remark = models.CharField(max_length=500, null=True, blank=True)
-    published_date = models.DateTimeField(null=True, blank=True)
     title = models.CharField(max_length=100, null=False, blank=False)
     display_picture = models.CharField(max_length=500, null=False, blank=False)
     number_of_pages = models.IntegerField(default=0)
@@ -38,6 +37,7 @@ class SellerNotes(models.Model):
     actioned_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='actioned_notes')
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_notes')
     modified_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='modified_notes')
+    published_date = models.DateTimeField(null=True, blank=True)
     created_date = models.DateTimeField(default=timezone.now)
     modified_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
     is_active = models.BooleanField(default=True)

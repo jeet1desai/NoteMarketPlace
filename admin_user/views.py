@@ -208,5 +208,31 @@ class DownloadedNotes(ListAPIView):
         serialized_downloaded_notes = DownloadSerializer(downloaded_notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_downloaded_notes}, status=status.HTTP_200_OK)
 
+class RejectedNotes(ListAPIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="rejected note")
+    def get(self, request, format=None):
+        search_param = request.query_params.get('search', '').lower()
+        notes = SellerNotes.objects.filter(status=5)
 
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                notes = notes.filter(modified_date__date=search_date.date())
+            except ValueError:
+                status_mapping = {'paid': True, 'free': False}
+                if search_param in status_mapping:
+                    status_value = status_mapping[search_param]
+                    notes = notes.filter(is_paid=status_value)
+                else:   
+                    notes = notes.filter(
+                        Q(title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
+                        Q(category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param) |
+                        Q(admin_remark__icontains=search_param) | Q(actioned_by__last_name__icontains=search_param) |
+                        Q(actioned_by__first_name__icontains=search_param)
+                    )
+
+        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
