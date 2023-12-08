@@ -11,7 +11,7 @@ from datetime import datetime
 from django.utils import timezone
 from notes.models import SellerNotes, Downloads
 from authenticate.models import User
-from notes.serializers import NoteSerializer
+from notes.serializers import NoteSerializer, DownloadSerializer
 from .serializers import (UpdateStatusSerializer, UpdateStatusRemarkSerializer)
 from user.serializers import UserProfileSerializer
 from django.db.models import Sum
@@ -26,7 +26,7 @@ class NoteUnderReview(ListAPIView):
 
         if search_param:
             try:
-                search_date = datetime.strptime(search_param, "%Y-%m-%d %H:%M")
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
                 notes = notes.filter(created_date__date=search_date.date())
             except ValueError:
                 status_mapping = {'submitted for review': 2, 'in review': 3}
@@ -49,21 +49,29 @@ class PublishedNotes(ListAPIView):
         search_param = request.query_params.get('search', '').lower()
         notes = SellerNotes.objects.filter(status=4)
         
-        # if search_param:
-        #     try:
-        #         search_date = datetime.strptime(search_param, "%Y-%m-%d %H:%M")
-        #         notes = notes.filter(created_date__date=search_date.date())
-        #     except ValueError:
-        #         status_mapping = {'submitted for review': 2, 'in review': 3}
-        #         if search_param in status_mapping:
-        #             status_value = status_mapping[search_param]
-        #             notes = notes.filter(status=status_value)
-        #         else:   
-        #             notes = notes.filter(
-        #                 Q(title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
-        #                 Q(category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param)
-        #             )
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                notes = notes.filter(published_date__date=search_date.date())
+            except ValueError:
+                status_mapping = {'paid': True, 'Free': False}
+                if search_param in status_mapping:
+                    status_value = status_mapping[search_param]
+                    notes = notes.filter(is_paid=status_value)
+                else:   
+                    notes = notes.filter(
+                        Q(title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
+                        Q(category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param) |
+                        Q(selling_price__icontains=search_param) | Q(actioned_by__last_name__icontains=search_param) |
+                        Q(actioned_by__first_name__icontains=search_param)
+                    )
+
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        for note_data in serialized_in_progress_note:
+            note_id = note_data['id']
+            total_downloaded_notes_count = Downloads.objects.filter(note_id=note_id, is_attachment_downloaded=True).count()
+            note_data['total_downloaded_notes'] = total_downloaded_notes_count
+
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class NoteUpdateStatus(APIView):
@@ -118,15 +126,15 @@ class Members(APIView):
     @method_decorator(admin_required, name="members")
     def get(self, request, *args, **kwargs): 
         search_param = request.query_params.get('search', '').lower()
-        notes = User.objects.filter(role_id=3, is_active=True)
-        serialized_user = UserProfileSerializer(notes, many=True).data
+        users = User.objects.filter(role_id=3, is_active=True)
+        serialized_user = UserProfileSerializer(users, many=True).data
 
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
-                notes = notes.filter(created_date__date=search_date.date())
+                users = users.filter(created_date__date=search_date.date())
             except ValueError:
-                notes = notes.filter(
+                users = users.filter(
                     Q(first_name__icontains=search_param) | Q(last_name__icontains=search_param) | 
                     Q(email__icontains=search_param)     
                 )
@@ -152,3 +160,53 @@ class Members(APIView):
             user_data['total_earnings'] = total_earnings
 
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
+    
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="deactivate member")
+    def delete(self, request, user_id, format=None):
+        try:
+            user = User.objects.get(id=user_id, role_id=3)
+        except User.DoesNotExist:
+            return Response({'status': status.HTTP_404_NOT_FOUND, 'msg': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        user.is_active = False
+        user.save()
+
+        published_notes = SellerNotes.objects.filter(seller=user, status=4)
+        for note in published_notes:
+            note.status = 6
+            note.save()
+
+        serialized_user = UserProfileSerializer(user).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
+
+class DownloadedNotes(ListAPIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="downloaded notes")
+    def get(self, request, format=None):
+        search_param = request.query_params.get('search', '').lower()
+        downloaded_notes = Downloads.objects.filter(is_attachment_downloaded=True)
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                downloaded_notes = downloaded_notes.filter(attachment_downloaded_date__date=search_date.date())
+            except ValueError:
+                status_mapping = {'paid': True, 'free': False}
+                if search_param in status_mapping:
+                    status_value = status_mapping[search_param]
+                    downloaded_notes = downloaded_notes.filter(note__is_paid=status_value)
+                else:   
+                    downloaded_notes = downloaded_notes.filter(
+                        Q(note__title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
+                        Q(note__category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param) |
+                        Q(downloader__first_name__icontains=search_param) | Q(downloader__first_name__icontains=search_param) |
+                        Q(note__selling_price__icontains=search_param)
+                    )
+        serialized_downloaded_notes = DownloadSerializer(downloaded_notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_downloaded_notes}, status=status.HTTP_200_OK)
+
+
+
