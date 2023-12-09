@@ -12,7 +12,9 @@ urlpatterns = [
     path('update_user/', views.UserProfileUpdate.as_view(), name="update user"),
     path('update_admin/', views.AdminProfileUpdate.as_view(), name="update admin"),
 
-    path('add_review/', views.AddReview.as_view(), name="add review"),
+    path('add_review/', views.Review.as_view(), name="add review"),
+    path('get_review/<int:note_id>/', views.Review.as_view(), name="get review"),
+    path('delete_review/<int:review_id>/', views.Review.as_view(), name="delete review"),
     
     # seller, buyer
 ]

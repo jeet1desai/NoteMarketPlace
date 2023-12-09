@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from super_admin.models import Country, NoteCategory, NoteType
 from authenticate.models import User
+from notes.models import Downloads, SellerNotesReviews
 
 class ContactUsSerializer(serializers.Serializer):
     name = serializers.CharField(required=True)
@@ -26,7 +27,7 @@ class NoteTypeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "email"]
+        fields = ["id", "first_name", "last_name", "email", "profile_picture"]
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
