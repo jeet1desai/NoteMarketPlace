@@ -8,9 +8,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer,
-    BuyerRequestSerializer, DownloadSerializer)
+    BuyerRequestSerializer, DownloadSerializer, AddReviewSerializer, ReviewSerializer)
 from super_admin.models import Country, NoteCategory, NoteType
-from .models import SellerNotes, Downloads
+from .models import SellerNotes, Downloads, SellerNotesReviews
 from authenticate.models import User
 from django.db.models import Q
 from datetime import datetime
@@ -353,6 +353,41 @@ class MyDownloadNotes(APIView):
         serialized_download_notes = DownloadSerializer(my_download_notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_download_notes}, status=status.HTTP_200_OK)
         
+class AddReview(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="add review")
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = AddReviewSerializer(data=request.data, context={'user': user})
+        if serializer.is_valid():
+            download_id = serializer.validated_data['download_id']
+            rating = serializer.validated_data['rating']
+            comment = serializer.validated_data['comment']
+
+            downloaded_note = Downloads.objects.get(id=download_id)
+            note = SellerNotes.objects.get(id=downloaded_note.note.id)
+
+            review = SellerNotesReviews.objects.create(
+                rating = rating,
+                comment = comment,
+                note = note,
+                reviewed_by = user,
+                against_downloads = downloaded_note,
+                created_date = timezone.now(),
+                modified_date = timezone.now(),
+                created_by = user,
+                modified_by = user,
+            )
+            serializer_review = ReviewSerializer(review).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serializer_review}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+
+
 
 
 

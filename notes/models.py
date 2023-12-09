@@ -65,14 +65,14 @@ class SellerNotesReviews(models.Model):
     id = models.AutoField(primary_key=True)
     rating = models.IntegerField(default=0)
     comment = models.CharField(max_length=500, null=False, blank=False)
-    created_date = models.DateTimeField(default=timezone.now)
-    modified_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
-    is_active = models.BooleanField(default=True)
     note = models.ForeignKey(SellerNotes, on_delete=models.DO_NOTHING)
     reviewed_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='reviewed_reviews')
     against_downloads = models.ForeignKey(Downloads, on_delete=models.DO_NOTHING, related_name='against_downloads_reviews')
+    created_date = models.DateTimeField(default=timezone.now)
+    modified_date = models.DateTimeField(default=timezone.now, null=True, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='created_reviews')
     modified_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='modified_reviews')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.rating}"
