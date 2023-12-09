@@ -44,7 +44,7 @@ class NoteUnderReview(ListAPIView):
 class PublishedNotes(ListAPIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(admin_required, name="note under review")
+    @method_decorator(admin_required, name="published note")
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         notes = SellerNotes.objects.filter(status=4)

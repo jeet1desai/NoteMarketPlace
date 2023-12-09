@@ -18,6 +18,8 @@ urlpatterns = [
 
     path('my_sold_note/', views.MySoldNotes.as_view(), name="my sold note"),
     path('my_download_note/', views.MyDownloadNotes.as_view(), name="my download note"),
-    
-    # stats, note detail, note list (with all search and filter)
+
+    path('get_note/<int:note_id>/', views.NoteDetails.as_view(), name="get notes"),
+
+    # stats, note list (with all search and filter)
 ]

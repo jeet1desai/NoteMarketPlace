@@ -353,6 +353,17 @@ class MyDownloadNotes(APIView):
         serialized_download_notes = DownloadSerializer(my_download_notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_download_notes}, status=status.HTTP_200_OK)
 
+class NoteDetails(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="note details")
+    def get(elf, request, note_id, format=None):
+        try:
+            note_detail = SellerNotes.objects.get(id=note_id)
+            serialized_note_detail = NoteSerializer(note_detail).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
+        except SellerNotes.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
 
 

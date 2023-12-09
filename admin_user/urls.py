@@ -15,5 +15,5 @@ urlpatterns = [
 
     path('user_notes/<int:user_id>/', views.AllUserNotes.as_view(), name="all user notes"),
 
-    # stats, 2 published note
+    # stats, report span and span list
 ]
