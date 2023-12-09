@@ -13,5 +13,7 @@ urlpatterns = [
     path('members/', views.Members.as_view(), name="members"),
     path('members/<int:user_id>/', views.Members.as_view(), name="deactivate members"),
 
+    path('user_notes/<int:user_id>/', views.AllUserNotes.as_view(), name="all user notes"),
+
     # delete review, stats, 2 published note
 ]

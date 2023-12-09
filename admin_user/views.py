@@ -236,3 +236,20 @@ class RejectedNotes(ListAPIView):
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
+class AllUserNotes(ListAPIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="user notes")
+    def get(self, request, user_id, format=None):
+        user = User.objects.get(id=user_id)
+        notes = SellerNotes.objects.filter(seller=user).exclude(status=1)
+        serialized_user_notes = NoteSerializer(notes, many=True).data
+
+        for note_data in serialized_user_notes:
+            note_id = note_data['id']
+            total_downloaded_notes_count = Downloads.objects.filter(note_id=note_id, is_attachment_downloaded=True).count()
+            note_data['total_downloaded_notes'] = total_downloaded_notes_count
+            note_data['total_earnings'] = total_downloaded_notes_count * note_data["selling_price"]
+
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user_notes}, status=status.HTTP_200_OK)
+
