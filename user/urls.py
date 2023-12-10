@@ -15,6 +15,7 @@ urlpatterns = [
     path('add_review/', views.Review.as_view(), name="add review"),
     path('get_review/<int:note_id>/', views.Review.as_view(), name="get review"),
     path('delete_review/<int:review_id>/', views.Review.as_view(), name="delete review"),
-    
-    # seller, buyer
+
+    path('sellers/', views.Seller.as_view(), name="seller"),
+    path('buyers/', views.Buyer.as_view(), name="buyer"),
 ]

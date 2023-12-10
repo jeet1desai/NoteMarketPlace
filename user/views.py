@@ -3,9 +3,8 @@ from notemarketplace import renderers
 from rest_framework.response import Response
 from rest_framework import status
 from super_admin.models import SystemConfigurations
-from .serializers import (ContactUsSerializer, CountrySerializer, CategorySerializer, NoteTypeSerializer,
-                          UserProfileSerializer, UserProfileUpdateSerializer, AdminProfileUpdateSerializer,
-                          AddReviewSerializer, ReviewSerializer)
+from .serializers import (ContactUsSerializer, CountrySerializer, CategorySerializer, NoteTypeSerializer, UserProfileSerializer, 
+    UserProfileUpdateSerializer, AdminProfileUpdateSerializer, AddReviewSerializer, ReviewSerializer, UserSerializer)
 from notemarketplace import utils
 from rest_framework.permissions import IsAuthenticated
 from notemarketplace.decorators import normal_required, admin_required
@@ -183,4 +182,23 @@ class Review(APIView):
         except SellerNotesReviews.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
         
-        
+class Seller(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="seller")
+    def get(self, request, format=None):
+        published_sellers = User.objects.filter(seller_notes__status=4, seller_notes__is_active=True).distinct()
+        serialized_user = UserSerializer(published_sellers, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serialized_user}, status=status.HTTP_200_OK)
+    
+class Buyer(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="seller")
+    def get(self, request, format=None):
+        downloaded_buyers = User.objects.filter(
+            downloader_downloads__is_attachment_downloaded=True,
+            downloader_downloads__is_seller_has_allowed_to_download=True,
+        ).distinct()
+        serialized_user = UserSerializer(downloaded_buyers, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serialized_user}, status=status.HTTP_200_OK)
