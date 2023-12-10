@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,11 +24,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-kr9(*tj2lz1l+q2nmp-2we_o=h!nygutwmfl4$5(k8&zfiyof0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 # CORS Error
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:8000", "https://notemarketplace.netlify.app"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:8000", "https://notemarketplace.netlify.app", "http://notemarketplace.pythonanywhere.com", "https://notemarketplace.pythonanywhere.com"]
 
 # Application definition
 
@@ -54,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     # Added
@@ -186,3 +186,6 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = "authenticate.User"
+
+STATIC_ROOT = BASE_DIR / 'static'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
