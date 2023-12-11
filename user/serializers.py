@@ -44,7 +44,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     email = serializers.CharField(required=True)
-    date_of_birth = serializers.DateTimeField(allow_blank=True)
+    date_of_birth = serializers.DateTimeField(required=False, allow_null=True)
     gender = serializers.CharField(required=True)
     phone_country_code = serializers.CharField(required=True)
     phone_number = serializers.CharField(required=True)
