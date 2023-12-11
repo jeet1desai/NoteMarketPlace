@@ -21,3 +21,6 @@ python manage.py migrate
 <!-- Virtual Env -->
 virtualenv env
 . env/bin/activate
+
+<!-- collect admin static -->
+python manage.py collectstatic
