@@ -31,7 +31,7 @@ class Note(APIView):
             country_instance = Country.objects.get(id=int(country)) if country != "" else None
             type_instance = NoteType.objects.get(id=int(note_type)) if note_type != "" else None
 
-            if "display_picture" not in serializer.validated_data or display_picture == "":
+            if display_picture == "":
                 serializer.validated_data['display_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
             else:
                 serializer.validated_data['display_picture'] = display_picture
