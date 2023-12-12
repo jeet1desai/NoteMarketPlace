@@ -27,6 +27,7 @@ class NotePostPutSerializer(serializers.ModelSerializer):
     title = serializers.CharField(required=True)
     description = serializers.CharField(required=True)
     category = serializers.CharField(required=True)
+    display_picture = serializers.CharField(allow_blank=True)
     notes_preview = serializers.CharField(required=True)
     file = serializers.CharField(required=True)
     file_name = serializers.CharField(required=True)
@@ -35,11 +36,11 @@ class NotePostPutSerializer(serializers.ModelSerializer):
     selling_price = serializers.IntegerField(required=True)
     note_type = serializers.CharField(allow_blank=True)
     country = serializers.CharField(allow_blank=True)
-    number_of_pages = serializers.IntegerField()
-    university_name = serializers.CharField()
-    course = serializers.CharField()
-    course_code = serializers.CharField()
-    professor = serializers.CharField()
+    number_of_pages = serializers.IntegerField(allow_blank=True)
+    university_name = serializers.CharField(allow_blank=True)
+    course = serializers.CharField(allow_blank=True)
+    course_code = serializers.CharField(allow_blank=True)
+    professor = serializers.CharField(allow_blank=True)
 
     class Meta:
         model = SellerNotes
