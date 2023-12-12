@@ -36,7 +36,7 @@ class NotePostPutSerializer(serializers.ModelSerializer):
     selling_price = serializers.IntegerField(required=True)
     note_type = serializers.CharField(allow_blank=True)
     country = serializers.CharField(allow_blank=True)
-    number_of_pages = serializers.IntegerField(allow_blank=True)
+    number_of_pages = serializers.IntegerField()
     university_name = serializers.CharField(allow_blank=True)
     course = serializers.CharField(allow_blank=True)
     course_code = serializers.CharField(allow_blank=True)
