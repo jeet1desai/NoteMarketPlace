@@ -60,7 +60,7 @@ class Note(APIView):
     def put(self, request, note_id, uStatus, format=None):
         user = request.user
         try:
-            note = SellerNotes.objects.get(id=note_id)
+            note = SellerNotes.objects.get(id=note_id, seller=user)
             serializer = NotePostPutSerializer(note, data=request.data)
             if serializer.is_valid():
                 category = serializer.validated_data.pop('category')
@@ -101,7 +101,7 @@ class InProgressNote(ListAPIView):
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         user = self.request.user
-        notes = SellerNotes.objects.filter(status__in=[1, 2, 3], created_by=user)
+        notes = SellerNotes.objects.filter(status__in=[1, 2, 3], seller=user)
 
         if search_param:
             try:
@@ -153,7 +153,7 @@ class RejectedNote(ListAPIView):
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         user = self.request.user
-        notes = SellerNotes.objects.filter(status=5, created_by=user)
+        notes = SellerNotes.objects.filter(status=5, seller=user)
 
         if search_param:
             notes = notes.filter(

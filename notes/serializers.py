@@ -10,17 +10,17 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        created_by = instance.created_by
+        seller = instance.seller
         user = self.context.get("user")
-        if created_by != user and user.role_id == 3:
+        if seller != user and user.role_id == 3:
             representation.pop('file', None)
-        representation['created_by'] = UserSerializer(created_by).data
         if instance.country:
             representation['country'] = CountrySerializer(instance.country).data
         if instance.note_type:
            representation['note_type'] = NoteTypeSerializer(instance.note_type).data
         if instance.category:
             representation['category'] = CategorySerializer(instance.category).data
+        representation['created_by'] = UserSerializer(instance.created_by).data
         representation['seller'] = UserSerializer(instance.seller).data
         representation['actioned_by'] = UserSerializer(instance.actioned_by).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
@@ -99,7 +99,7 @@ class DownloadNoteSerializer(serializers.Serializer):
 
         if not SellerNotes.objects.filter(id=note_id).exists():
             raise serializers.ValidationError("Note is not exists.")
-        if SellerNotes.objects.filter(id=note_id, created_by=user).exists():
+        if SellerNotes.objects.filter(id=note_id, seller=user).exists():
             raise serializers.ValidationError("You cannot download your own note.")
         if Downloads.objects.filter(note_id=note_id, downloader=user).exists():
             raise serializers.ValidationError("You have already purchased it.")
