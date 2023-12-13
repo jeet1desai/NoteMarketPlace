@@ -10,8 +10,11 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation.pop('file', None)
-        representation['created_by'] = UserSerializer(instance.created_by).data
+        created_by = instance.created_by
+        user = self.context.get("user")
+        if created_by != user and user.role_id == 3:
+            representation.pop('file', None)
+        representation['created_by'] = UserSerializer(created_by).data
         if instance.country:
             representation['country'] = CountrySerializer(instance.country).data
         if instance.note_type:
@@ -79,8 +82,9 @@ class DownloadSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        user = self.context.get("user")
         representation['created_by'] = UserSerializer(instance.created_by).data
-        representation['note'] = NoteSerializer(instance.note).data
+        representation['note'] = NoteSerializer(instance.note, context={'user': user}).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
         representation['seller'] = UserSerializer(instance.seller).data
         representation['downloader'] = UserSerializer(instance.downloader).data

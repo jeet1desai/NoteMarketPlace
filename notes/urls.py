@@ -5,8 +5,8 @@ urlpatterns = [
     path('create_note/<int:uStatus>/', views.Note.as_view(), name="create note"),
     path('update_note/<int:note_id>/<int:uStatus>/', views.Note.as_view(), name="update note"),
 
-    path('in_progress_note', views.InProgressNote.as_view(), name="in progress note"),
-    path('published_note', views.PublishedNote.as_view(), name="published note"),
+    path('in_progress_note/', views.InProgressNote.as_view(), name="in progress note"),
+    path('published_note/', views.PublishedNote.as_view(), name="published note"),
     
     path('rejected_note', views.RejectedNote.as_view(), name="rejected note"),
     path('clone_note/', views.CloneNoteView.as_view(), name="clone note"),

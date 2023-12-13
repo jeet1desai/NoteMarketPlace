@@ -23,7 +23,7 @@ class NoteUnderReview(ListAPIView):
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         notes = SellerNotes.objects.filter(status__in=[2, 3])
-
+        user = request.user
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
@@ -38,7 +38,7 @@ class NoteUnderReview(ListAPIView):
                         Q(title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
                         Q(category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param)
                     )
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class PublishedNotes(ListAPIView):
@@ -46,6 +46,7 @@ class PublishedNotes(ListAPIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(admin_required, name="published note")
     def get(self, request, format=None):
+        user = request.user
         search_param = request.query_params.get('search', '').lower()
         notes = SellerNotes.objects.filter(status=4)
         
@@ -66,7 +67,7 @@ class PublishedNotes(ListAPIView):
                         Q(actioned_by__first_name__icontains=search_param)
                     )
 
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         for note_data in serialized_in_progress_note:
             note_id = note_data['id']
             total_downloaded_notes_count = Downloads.objects.filter(note_id=note_id, is_attachment_downloaded=True).count()
@@ -92,7 +93,7 @@ class NoteUpdateStatus(APIView):
             if new_status == 4:
                 note_instance.published_date = timezone.now()
             note_instance.save()
-            serialized_note = NoteSerializer(note_instance).data
+            serialized_note = NoteSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -115,7 +116,7 @@ class NoteUpdateRemarkStatus(APIView):
             note_instance.modified_by = user
             note_instance.modified_date = timezone.now()
             note_instance.save()
-            serialized_note = NoteSerializer(note_instance).data
+            serialized_note = NoteSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -188,7 +189,7 @@ class DownloadedNotes(ListAPIView):
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         downloaded_notes = Downloads.objects.filter(is_attachment_downloaded=True)
-
+        user = request.user
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
@@ -205,7 +206,7 @@ class DownloadedNotes(ListAPIView):
                         Q(downloader__first_name__icontains=search_param) | Q(downloader__first_name__icontains=search_param) |
                         Q(note__selling_price__icontains=search_param)
                     )
-        serialized_downloaded_notes = DownloadSerializer(downloaded_notes, many=True).data
+        serialized_downloaded_notes = DownloadSerializer(downloaded_notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_downloaded_notes}, status=status.HTTP_200_OK)
 
 class RejectedNotes(ListAPIView):
@@ -213,6 +214,7 @@ class RejectedNotes(ListAPIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(admin_required, name="rejected note")
     def get(self, request, format=None):
+        user = request.user
         search_param = request.query_params.get('search', '').lower()
         notes = SellerNotes.objects.filter(status=5)
 
@@ -233,7 +235,7 @@ class RejectedNotes(ListAPIView):
                         Q(actioned_by__first_name__icontains=search_param)
                     )
 
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class AllUserNotes(ListAPIView):
@@ -241,9 +243,10 @@ class AllUserNotes(ListAPIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(admin_required, name="user notes")
     def get(self, request, user_id, format=None):
+        user_auth = request.user
         user = User.objects.get(id=user_id)
         notes = SellerNotes.objects.filter(seller=user).exclude(status=1)
-        serialized_user_notes = NoteSerializer(notes, many=True).data
+        serialized_user_notes = NoteSerializer(notes, many=True, context={'user': user_auth}).data
 
         for note_data in serialized_user_notes:
             note_id = note_data['id']

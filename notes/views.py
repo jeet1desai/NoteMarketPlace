@@ -10,7 +10,7 @@ from django.utils import timezone
 from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer,
     BuyerRequestSerializer, DownloadSerializer)
 from super_admin.models import Country, NoteCategory, NoteType
-from .models import SellerNotes, Downloads, SellerNotesReviews
+from .models import SellerNotes, Downloads
 from authenticate.models import User
 from django.db.models import Q
 from datetime import datetime
@@ -20,6 +20,7 @@ class Note(APIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(normal_required, name="create note")
     def post(self, request, uStatus, format=None):
+        user = request.user
         serializer = NotePostPutSerializer(data=request.data)
         if serializer.is_valid():
             category = serializer.validated_data.pop('category')
@@ -40,15 +41,15 @@ class Note(APIView):
             serializer.validated_data['category'] = category_instance
             serializer.validated_data['country'] = country_instance
             serializer.validated_data['note_type'] = type_instance
-            serializer.validated_data['seller'] = request.user
-            serializer.validated_data['created_by'] = request.user
-            serializer.validated_data['modified_by'] = request.user
-            serializer.validated_data['actioned_by'] = request.user
+            serializer.validated_data['seller'] = user
+            serializer.validated_data['created_by'] = user
+            serializer.validated_data['modified_by'] = user
+            serializer.validated_data['actioned_by'] = user
             serializer.validated_data['created_date'] = timezone.now()
             serializer.validated_data['modified_date'] = timezone.now()
 
             note_instance = serializer.save()
-            serialized_note = NoteSerializer(note_instance).data
+            serialized_note = NoteSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_201_CREATED)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -57,6 +58,7 @@ class Note(APIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(normal_required, name="update note")
     def put(self, request, note_id, uStatus, format=None):
+        user = request.user
         try:
             note = SellerNotes.objects.get(id=note_id)
             serializer = NotePostPutSerializer(note, data=request.data)
@@ -79,13 +81,13 @@ class Note(APIView):
                 serializer.validated_data['category'] = category_instance
                 serializer.validated_data['country'] = country_instance
                 serializer.validated_data['note_type'] = type_instance
-                serializer.validated_data['seller'] = request.user
-                serializer.validated_data['modified_by'] = request.user
-                serializer.validated_data['actioned_by'] = request.user
+                serializer.validated_data['seller'] = user
+                serializer.validated_data['modified_by'] = user
+                serializer.validated_data['actioned_by'] = user
                 serializer.validated_data['modified_date'] = timezone.now()
 
                 note_instance = serializer.save()
-                serialized_note = NoteSerializer(note_instance).data
+                serialized_note = NoteSerializer(note_instance, context={'user': user}).data
                 return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
             else:
                 return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
@@ -115,7 +117,7 @@ class InProgressNote(ListAPIView):
                         Q(title__icontains=search_param) | Q(created_date__icontains=search_param) |
                         Q(category__name__icontains=search_param)
                     )
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class PublishedNote(ListAPIView):
@@ -141,7 +143,7 @@ class PublishedNote(ListAPIView):
                         Q(title__icontains=search_param) | Q(created_date__icontains=search_param) |
                         Q(category__name__icontains=search_param)
                     )
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class RejectedNote(ListAPIView):
@@ -158,7 +160,7 @@ class RejectedNote(ListAPIView):
                 Q(title__icontains=search_param) | Q(admin_remark__icontains=search_param) |
                 Q(category__name__icontains=search_param)
             )
-        serialized_in_progress_note = NoteSerializer(notes, many=True).data
+        serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
 class CloneNoteView(APIView):
@@ -166,6 +168,7 @@ class CloneNoteView(APIView):
     permission_classes = [IsAuthenticated]
     @method_decorator(normal_required, name="clone note")
     def post(self, request, *args, **kwargs):
+        user = request.user
         serializer = CloneNoteSerializer(data=request.data)
         if serializer.is_valid():
             note_id = serializer.validated_data['note_id']
@@ -187,7 +190,7 @@ class CloneNoteView(APIView):
                 modified_by=original_note.modified_by,
                 seller=original_note.seller,
             )
-            serializer_note = NoteSerializer(cloned_note).data
+            serializer_note = NoteSerializer(cloned_note, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serializer_note }, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -265,7 +268,7 @@ class BuyerRequests(APIView):
                         Q(note__selling_price__icontains=search_param)
                     )
 
-        serialized_buyer_request = DownloadSerializer(buyer_request_notes, many=True).data
+        serialized_buyer_request = DownloadSerializer(buyer_request_notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_buyer_request}, status=status.HTTP_200_OK)
 
     renderer_classes = [renderers.ResponseRenderer]
@@ -282,7 +285,7 @@ class BuyerRequests(APIView):
             note_instance.modified_by = user
             note_instance.modified_date = timezone.now()
             note_instance.save()
-            serialized_note = DownloadSerializer(note_instance).data
+            serialized_note = DownloadSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -317,7 +320,7 @@ class MySoldNotes(APIView):
                         Q(note__selling_price__icontains=search_param)
                     )
 
-        serialized_sold_notes = DownloadSerializer(my_sold_notes, many=True).data
+        serialized_sold_notes = DownloadSerializer(my_sold_notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_sold_notes}, status=status.HTTP_200_OK)
 
 class MyDownloadNotes(APIView):
@@ -350,7 +353,7 @@ class MyDownloadNotes(APIView):
                         Q(note__selling_price__icontains=search_param)
                     )
 
-        serialized_download_notes = DownloadSerializer(my_download_notes, many=True).data
+        serialized_download_notes = DownloadSerializer(my_download_notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_download_notes}, status=status.HTTP_200_OK)
 
 class NoteDetails(APIView):
@@ -359,8 +362,9 @@ class NoteDetails(APIView):
     @method_decorator(normal_required, name="note details")
     def get(elf, request, note_id, format=None):
         try:
+            user = request.user
             note_detail = SellerNotes.objects.get(id=note_id)
-            serialized_note_detail = NoteSerializer(note_detail).data
+            serialized_note_detail = NoteSerializer(note_detail, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
         except SellerNotes.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)

@@ -113,10 +113,8 @@ class ReviewSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['created_by'] = UserSerializer(instance.created_by).data
-        # representation['note'] = NoteSerializer(instance.note).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
         representation['reviewed_by'] = UserSerializer(instance.reviewed_by).data
-        # representation['against_downloads'] = DownloadSerializer(instance.against_downloads).data
         return representation
     
 class AddReviewSerializer(serializers.Serializer):
