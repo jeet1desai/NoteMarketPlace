@@ -22,11 +22,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         data.pop('password', None)
         return data
     
-    def create(self, validated_data):
-        validated_data['profile_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
-        user = User.objects.create(**validated_data)
-        return user
-    
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True)

@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSerializer, CategoryPostSerializer,
     CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer, 
     AdminPostSerializer, AdminPutSerializer)
-from notemarketplace.decorators import super_admin_required
+from notemarketplace.decorators import super_admin_required, admin_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import datetime
@@ -37,6 +37,19 @@ class Configuration(APIView):
     def post(self, request, format=None):
         serializer = ConfigPostSerializer(data=request.data)
         if serializer.is_valid():
+            profile_picture = serializer.validated_data.pop('profile_picture')
+            note_picture = serializer.validated_data.pop('note_picture')
+
+            if profile_picture == "":
+                serializer.validated_data['profile_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+            else:
+                serializer.validated_data['profile_picture'] = profile_picture
+
+            if note_picture == "":
+                serializer.validated_data['note_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+            else:
+                serializer.validated_data['note_picture'] = note_picture
+
             serializer.validated_data['created_by'] = request.user
             config = serializer.save()
             serialized_config = ConfigPostSerializer(config).data
@@ -150,7 +163,7 @@ class Admin(APIView):
 class Countries(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="get country")
+    @method_decorator(admin_required, name="get country")
     def get(self, request, country_id=None, format=None):
         if country_id is not None:
             try:
@@ -179,7 +192,7 @@ class Countries(APIView):
     
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="post country")
+    @method_decorator(admin_required, name="post country")
     def post(self, request, format=None):
         serializer = CountryPostSerializer(data=request.data)
         if serializer.is_valid():
@@ -196,7 +209,7 @@ class Countries(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="update country")
+    @method_decorator(admin_required, name="update country")
     def put(self, request, country_id, format=None):
         try:
             country = Country.objects.get(id=country_id)
@@ -215,7 +228,7 @@ class Countries(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="delete country")
+    @method_decorator(admin_required, name="delete country")
     def delete(self, request, country_id, format=None):
         try:
             country = Country.objects.get(id=country_id)
@@ -233,7 +246,7 @@ class Countries(APIView):
 class NoteCategories(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="get note category")
+    @method_decorator(admin_required, name="get note category")
     def get(self, request, category_id=None, format=None):
         if category_id is not None:
             try:
@@ -262,7 +275,7 @@ class NoteCategories(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="post category")
+    @method_decorator(admin_required, name="post category")
     def post(self, request, format=None):
         serializer = CategoryPostSerializer(data=request.data)
         if serializer.is_valid():
@@ -279,7 +292,7 @@ class NoteCategories(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="update category")
+    @method_decorator(admin_required, name="update category")
     def put(self, request, category_id, format=None):
         try:
             category = NoteCategory.objects.get(id=category_id)
@@ -298,7 +311,7 @@ class NoteCategories(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="delete category")
+    @method_decorator(admin_required, name="delete category")
     def delete(self, request, category_id, format=None):
         try:
             category = NoteCategory.objects.get(id=category_id)
@@ -316,7 +329,7 @@ class NoteCategories(APIView):
 class NoteTypes(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="get note type")
+    @method_decorator(admin_required, name="get note type")
     def get(self, request, type_id=None, format=None):
         if type_id is not None:
             try:
@@ -345,7 +358,7 @@ class NoteTypes(APIView):
  
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="post type")
+    @method_decorator(admin_required, name="post type")
     def post(self, request, format=None):
         serializer = TypePostSerializer(data=request.data)
         if serializer.is_valid():
@@ -362,7 +375,7 @@ class NoteTypes(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="update type")
+    @method_decorator(admin_required, name="update type")
     def put(self, request, type_id, format=None):
         try:
             type = NoteType.objects.get(id=type_id)
@@ -381,7 +394,7 @@ class NoteTypes(APIView):
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="delete type")
+    @method_decorator(admin_required, name="delete type")
     def delete(self, request, type_id, format=None):
         try:
             type = NoteType.objects.get(id=type_id)
