@@ -7,8 +7,9 @@ urlpatterns = [
 
     path('in_progress_note/', views.InProgressNote.as_view(), name="in progress note"),
     path('published_note/', views.PublishedNote.as_view(), name="published note"),
+    path('delete_note/<int:note_id>/', views.DeleteNote.as_view(), name="delete note"),
     
-    path('rejected_note', views.RejectedNote.as_view(), name="rejected note"),
+    path('rejected_note/', views.RejectedNote.as_view(), name="rejected note"),
     path('clone_note/', views.CloneNoteView.as_view(), name="clone note"),
 
     path('download_note/', views.DownloadNote.as_view(), name="download note"),

@@ -146,6 +146,19 @@ class PublishedNote(ListAPIView):
         serialized_in_progress_note = NoteSerializer(notes, many=True, context={'user': user}).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
+class DeleteNote(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="delete note")
+    def delete(self, request, note_id, *args, **kwargs):
+        user = request.user
+        try:
+            note = SellerNotes.objects.filter(id=note_id, status=1)
+            note.delete()
+            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success" }, status=status.HTTP_200_OK)
+        except SellerNotes.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
 class RejectedNote(ListAPIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
