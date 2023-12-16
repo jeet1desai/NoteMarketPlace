@@ -25,7 +25,7 @@ class Configuration(APIView):
     def get(self, request, format=None):
         last_row = SystemConfigurations.objects.last()
         if last_row is None:
-           empty_config = {'email': ''}
+           empty_config = {'email': '','phone_number': '', 'facebook_url': '', 'twitter_url': '', 'linkedIn_url': '', 'profile_picture': '', 'note_picture': ''}
            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': empty_config}, status=status.HTTP_200_OK)
         else:
             serialized_config = ConfigGetSerializer(last_row).data

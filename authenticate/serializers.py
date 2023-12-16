@@ -32,17 +32,13 @@ class LoginSerializer(serializers.Serializer):
 
         if email_value and password_value:
             try:
-                user = User.objects.get(email=email_value)
+                user = User.objects.get(email=email_value, is_active=True, is_email_verified=True)
             except User.DoesNotExist:
                 user = None
             if user is None:
                 raise serializers.ValidationError('User not found.')
             elif user.password != password_value:
                 raise serializers.ValidationError('Invalid credential')
-            elif not user.is_active:
-                raise serializers.ValidationError('User is not active.')
-            elif not user.is_email_verified:
-                raise serializers.ValidationError('Email verification is not done.')
         else:
             raise serializers.ValidationError('Must include "email" and "password".')
         return attrs
