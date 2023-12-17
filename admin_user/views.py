@@ -142,7 +142,6 @@ class Members(APIView):
 
         for user_data in serialized_user:
             user_id = user_data['id']
-            # note user review
             notes_under_review_count = SellerNotes.objects.filter(seller_id=user_id, status=3).count()
             user_data['notes_under_review'] = notes_under_review_count
             # note published
@@ -153,6 +152,7 @@ class Members(APIView):
             user_data['total_downloaded_notes'] = total_downloaded_notes_count
             # total expense
             total_selling_price = SellerNotes.objects.filter(seller_id=user_id, status=4).aggregate(total=Sum('selling_price'))['total']
+            total_selling_price = total_selling_price  or 0
             user_data['total_selling_price'] = total_selling_price or 0
             # total earning
             total_downloaded_notes_price = Downloads.objects.filter(seller_id=user_id, is_attachment_downloaded=True).aggregate(total=Sum('note__selling_price'))['total']
