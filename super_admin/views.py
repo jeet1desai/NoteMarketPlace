@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSerializer, CategoryPostSerializer,
     CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer, 
-    AdminPostSerializer, AdminPutSerializer)
+    AdminPostSerializer, AdminPutSerializer, CountryPutSerializer)
 from notemarketplace.decorators import super_admin_required, admin_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
@@ -213,13 +213,13 @@ class Countries(APIView):
     def put(self, request, country_id, format=None):
         try:
             country = Country.objects.get(id=country_id)
-            serializer = CountryPostSerializer(country, data=request.data)
+            serializer = CountryPutSerializer(country, data=request.data)
             if serializer.is_valid():
                 serializer.validated_data['modified_by'] = request.user
                 serializer.validated_data['modified_date'] = timezone.now()
                 country = serializer.save()
 
-                serialized_country = CountryPostSerializer(country).data
+                serialized_country = CountryPutSerializer(country).data
                 return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_country}, status=status.HTTP_200_OK)
             else:
                 return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)

@@ -100,6 +100,42 @@ class CountryPostSerializer(serializers.ModelSerializer):
         fields = '__all__'
         extra_kwargs = {'created_by': {'required': False}, 'created_date': {'required': False}, 'modified_date': {'required': False}, 'modified_by': {'required': False}}
 
+    def validate(self, attrs):
+        country_name_value = attrs.get("name")
+        country_code_value = attrs.get("code")
+        
+        if Country.objects.filter(code=country_code_value).exists():
+            raise serializers.ValidationError("Country code is already exists.")
+        if Country.objects.filter(name=country_name_value).exists():
+            raise serializers.ValidationError("Country name is already exists.")
+        return attrs
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        return representation
+    
+class CountryPutSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(required=True)
+    code = serializers.CharField(required=True)
+
+    class Meta:
+        model = Country
+        fields = '__all__'
+        extra_kwargs = {'created_by': {'required': False}, 'created_date': {'required': False}, 'modified_date': {'required': False}, 'modified_by': {'required': False}}
+
+    def validate(self, attrs):
+        country_name_value = attrs.get("name")
+        country_code_value = attrs.get("code")
+        country_id = self.instance.id
+
+        if Country.objects.filter(code=country_code_value).exclude(id=country_id).exists():
+            raise serializers.ValidationError("Country code is already exists.")
+        if Country.objects.filter(name=country_name_value).exclude(id=country_id).exists():
+            raise serializers.ValidationError("Country name is already exists.")
+        return attrs
+
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['created_by'] = UserSerializer(instance.created_by).data
