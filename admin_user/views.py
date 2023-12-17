@@ -128,7 +128,6 @@ class Members(APIView):
     def get(self, request, *args, **kwargs): 
         search_param = request.query_params.get('search', '').lower()
         users = User.objects.filter(role_id=3, is_active=True)
-        serialized_user = UserProfileSerializer(users, many=True).data
 
         if search_param:
             try:
@@ -140,6 +139,7 @@ class Members(APIView):
                     Q(email__icontains=search_param)     
                 )
 
+        serialized_user = UserProfileSerializer(users, many=True).data
         for user_data in serialized_user:
             user_id = user_data['id']
             notes_under_review_count = SellerNotes.objects.filter(seller_id=user_id, status=3).count()
@@ -157,8 +157,7 @@ class Members(APIView):
             # total earning
             total_downloaded_notes_price = Downloads.objects.filter(seller_id=user_id, is_attachment_downloaded=True).aggregate(total=Sum('note__selling_price'))['total']
             total_downloaded_notes_price = total_downloaded_notes_price or 0
-            total_earnings = total_selling_price + total_downloaded_notes_price
-            user_data['total_earnings'] = total_earnings
+            user_data['total_earnings'] = total_downloaded_notes_price
 
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user}, status=status.HTTP_200_OK)
     

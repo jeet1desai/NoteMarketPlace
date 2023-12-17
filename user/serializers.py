@@ -36,6 +36,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        representation['phone_country_code'] = CountrySerializer(instance.phone_country_code).data
+        representation['country'] = CountrySerializer(instance.country).data
         representation['created_by'] = UserSerializer(instance.created_by).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
         return representation
