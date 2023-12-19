@@ -95,14 +95,9 @@ class DownloadNoteSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         note_id = attrs.get("note_id")
-        user = self.context.get("user")
 
         if not SellerNotes.objects.filter(id=note_id).exists():
             raise serializers.ValidationError("Note is not exists.")
-        if SellerNotes.objects.filter(id=note_id, seller=user).exists():
-            raise serializers.ValidationError("You cannot download your own note.")
-        if Downloads.objects.filter(note_id=note_id, downloader=user).exists():
-            raise serializers.ValidationError("You have already purchased it.")
         return attrs
 
 class BuyerRequestSerializer(serializers.Serializer):
