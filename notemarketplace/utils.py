@@ -40,3 +40,9 @@ def send_seller_download_mail(user, buyer_user, original_note):
     message = f'Note: {original_note.title} \nAllow download access to Buyer if you have received the payment from him.'
     recipient_list = [user.email]
     send_custom_email(subject, message, recipient_list)
+
+def send_buyer_allow_download_mail(email, seller, note):
+    subject = f"{seller.first_name} {seller.last_name} allow you to download the note {note.title}"
+    message = f'Please check my download page.'
+    recipient_list = [email]
+    send_custom_email(subject, message, recipient_list)

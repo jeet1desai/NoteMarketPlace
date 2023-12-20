@@ -249,7 +249,6 @@ class DownloadNote(APIView):
                     seller=seller_user,
                     downloader=user
                 )
-                serializer_download_note = DownloadNoteSerializer(download_note).data
                 return Response({ 'status': status.HTTP_200_OK, 'msg': 'Please check my download page', 'data': original_note.file }, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
@@ -304,6 +303,9 @@ class BuyerRequests(APIView):
             note_instance.modified_by = user
             note_instance.modified_date = timezone.now()
             note_instance.save()
+
+            utils.send_buyer_allow_download_mail(note_instance.downloader.email, user, note_instance.note)
+
             serialized_note = DownloadSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:
