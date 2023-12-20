@@ -219,15 +219,13 @@ class DownloadNote(APIView):
             note_id = serializer.validated_data['note_id']
             original_note = SellerNotes.objects.get(id=note_id)
             seller_user = User.objects.get(id=original_note.created_by.id)
-
-            print(Downloads.objects.filter(note__id=note_id, downloader=user))
             
             if User.objects.filter(id=user.id, role_id__in=[1, 2]).exists():
                 return Response({ 'status': status.HTTP_200_OK, 'msg': 'Successfully downloaded!', 'data': original_note.file}, status=status.HTTP_200_OK)
             if SellerNotes.objects.filter(id=note_id, seller=user).exists():
                 return Response({ 'status': status.HTTP_200_OK, 'msg': 'Successfully downloaded!', 'data': original_note.file}, status=status.HTTP_200_OK)
             if Downloads.objects.filter(note__id=note_id, downloader=user).exists():
-                return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "You have already purchased it."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "You have already purchased it."}, status=status.HTTP_200_OK)
             elif original_note.is_paid:
                 download_note = Downloads.objects.create(
                     note=original_note,
@@ -239,8 +237,7 @@ class DownloadNote(APIView):
                 )
                 utils.send_buyer_download_mail(user, seller_user, original_note)
                 utils.send_seller_download_mail(seller_user, user, original_note)
-                serializer_download_note = DownloadNoteSerializer(download_note).data
-                return Response({ 'status': status.HTTP_200_OK, 'msg': 'Seller will contact you.', 'data': serializer_download_note}, status=status.HTTP_200_OK)
+                return Response({ 'status': status.HTTP_200_OK, 'msg': 'Seller will contact you.'}, status=status.HTTP_200_OK)
             else:
                 download_note = Downloads.objects.create(
                     is_seller_has_allowed_to_download=True,
