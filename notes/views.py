@@ -224,8 +224,10 @@ class DownloadNote(APIView):
                 return Response({ 'status': status.HTTP_200_OK, 'msg': 'Successfully downloaded!', 'data': original_note.file}, status=status.HTTP_200_OK)
             if SellerNotes.objects.filter(id=note_id, seller=user).exists():
                 return Response({ 'status': status.HTTP_200_OK, 'msg': 'Successfully downloaded!', 'data': original_note.file}, status=status.HTTP_200_OK)
-            if Downloads.objects.filter(note__id=note_id, downloader=user).exists():
-                return Response({ 'status': status.HTTP_200_OK, 'msg': "You have already purchased it."}, status=status.HTTP_200_OK)
+            if Downloads.objects.filter(note__id=note_id, downloader=user, is_seller_has_allowed_to_download=True).exists():
+                return Response({ 'status': status.HTTP_200_OK, 'msg': 'Successfully downloaded!', 'data': original_note.file}, status=status.HTTP_200_OK)
+            elif Downloads.objects.filter(note__id=note_id, downloader=user, is_seller_has_allowed_to_download=False).exists():
+                return Response({ 'status': status.HTTP_200_OK, 'msg': "Seller will contact you."}, status=status.HTTP_200_OK)
             elif original_note.is_paid:
                 download_note = Downloads.objects.create(
                     note=original_note,
