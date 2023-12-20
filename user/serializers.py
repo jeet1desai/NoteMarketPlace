@@ -27,7 +27,12 @@ class NoteTypeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "first_name", "last_name", "email", "profile_picture"]
+        fields = ["id", "first_name", "last_name", "email", "profile_picture", "phone_country_code", "phone_number"]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['phone_country_code'] = CountrySerializer(instance.phone_country_code).data
+        return representation
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
