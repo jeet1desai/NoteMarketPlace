@@ -381,8 +381,6 @@ class MyDownloadNotes(APIView):
 
 class NoteDetails(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(normal_required, name="note details")
     def get(elf, request, note_id, format=None):
         try:
             user = request.user

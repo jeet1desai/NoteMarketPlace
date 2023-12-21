@@ -37,8 +37,6 @@ class ContactUs(APIView):
 
 class NoteCategoryList(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(normal_required, name="get category list")
     def get(self, request, format=None):
         all_category = NoteCategory.objects.filter(is_active=True)
         serialized_category = CategorySerializer(all_category, many=True).data
@@ -46,8 +44,6 @@ class NoteCategoryList(APIView):
     
 class NoteTypeList(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(normal_required, name="get type list")
     def get(self, request, format=None):
         all_type = NoteType.objects.filter(is_active=True)
         serialized_type = NoteTypeSerializer(all_type, many=True).data
@@ -55,8 +51,6 @@ class NoteTypeList(APIView):
     
 class CountryList(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(normal_required, name="get country list")
     def get(self, request, format=None):
         all_country = Country.objects.filter(is_active=True)
         serialized_country = CountrySerializer(all_country, many=True).data
@@ -159,8 +153,6 @@ class Review(APIView):
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(normal_required, name="get review")
     def get(self, request, note_id, format=None):
         note = SellerNotes.objects.get(id=note_id)
         reviews = SellerNotesReviews.objects.filter(note=note, is_active=True)
