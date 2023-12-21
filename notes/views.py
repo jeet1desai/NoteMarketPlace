@@ -383,9 +383,8 @@ class NoteDetails(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     def get(elf, request, note_id, format=None):
         try:
-            user = request.user
             note_detail = SellerNotes.objects.get(id=note_id)
-            serialized_note_detail = NoteSerializer(note_detail, context={'user': user}).data
+            serialized_note_detail = NoteSerializer(note_detail).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
         except SellerNotes.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
