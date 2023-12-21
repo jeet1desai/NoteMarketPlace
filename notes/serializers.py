@@ -1,7 +1,26 @@
 from rest_framework import serializers
-from .models import SellerNotes, Downloads, SellerNotesReviews
+from .models import SellerNotes, Downloads
 from super_admin.models import Country, NoteCategory, NoteType
 from user.serializers import CategorySerializer, NoteTypeSerializer, CountrySerializer, UserSerializer
+
+class AuthNoteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SellerNotes
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if instance.country:
+            representation['country'] = CountrySerializer(instance.country).data
+        if instance.note_type:
+           representation['note_type'] = NoteTypeSerializer(instance.note_type).data
+        if instance.category:
+            representation['category'] = CategorySerializer(instance.category).data
+        representation['created_by'] = UserSerializer(instance.created_by).data
+        representation['seller'] = UserSerializer(instance.seller).data
+        representation['actioned_by'] = UserSerializer(instance.actioned_by).data
+        representation['modified_by'] = UserSerializer(instance.modified_by).data
+        return representation
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -10,10 +29,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        seller = instance.seller
-        user = self.context.get("user")
-        if seller != user or user.role_id == 3:
-            representation.pop('file', None)
+        representation.pop('file', None)
         if instance.country:
             representation['country'] = CountrySerializer(instance.country).data
         if instance.note_type:
@@ -82,9 +98,8 @@ class DownloadSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        user = self.context.get("user")
         representation['created_by'] = UserSerializer(instance.created_by).data
-        representation['note'] = NoteSerializer(instance.note, context={'user': user}).data
+        representation['note'] = NoteSerializer(instance.note).data
         representation['modified_by'] = UserSerializer(instance.modified_by).data
         representation['seller'] = UserSerializer(instance.seller).data
         representation['downloader'] = UserSerializer(instance.downloader).data
