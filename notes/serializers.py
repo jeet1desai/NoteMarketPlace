@@ -12,7 +12,7 @@ class NoteSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
         seller = instance.seller
         user = self.context.get("user")
-        if seller != user and user.role_id == 3:
+        if seller != user or user.role_id == 3:
             representation.pop('file', None)
         if instance.country:
             representation['country'] = CountrySerializer(instance.country).data

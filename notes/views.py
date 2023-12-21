@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from notemarketplace import renderers, utils
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils.decorators import method_decorator
 from notemarketplace.decorators import normal_required
 from rest_framework.response import Response
@@ -381,10 +381,11 @@ class MyDownloadNotes(APIView):
 
 class NoteDetails(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    def get(elf, request, note_id, format=None):
+    def get(self, request, note_id, format=None):
         try:
+            user = self.request.user
             note_detail = SellerNotes.objects.get(id=note_id)
-            serialized_note_detail = NoteSerializer(note_detail).data
+            serialized_note_detail = NoteSerializer(note_detail, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
         except SellerNotes.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
