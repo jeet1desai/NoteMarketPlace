@@ -1,6 +1,6 @@
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
-from notemarketplace import renderers
+from notemarketplace import renderers, utils
 from rest_framework.permissions import IsAuthenticated
 from django.utils.decorators import method_decorator
 from notemarketplace.decorators import admin_required
@@ -116,6 +116,12 @@ class NoteUpdateRemarkStatus(APIView):
             note_instance.modified_by = user
             note_instance.modified_date = timezone.now()
             note_instance.save()
+
+
+            if new_status == 5:
+                utils.send_reject_note_mail(note_id, note_instance, note_instance.seller.email, remark)
+            elif new_status == 6:
+                utils.send_remove_note_mail(note_id, note_instance, note_instance.seller.email, remark)
             serialized_note = NoteSerializer(note_instance, context={'user': user}).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note}, status=status.HTTP_200_OK)
         else:

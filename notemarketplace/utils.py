@@ -46,3 +46,17 @@ def send_buyer_allow_download_mail(email, seller, note):
     message = f'Please check my download page.'
     recipient_list = [email]
     send_custom_email(subject, message, recipient_list)
+
+def send_reject_note_mail(id, note, email, remark):
+    clientURL = 'notemarketplace.netlify.app'
+    subject = f'Note Rejected - {note.title}'
+    message = f'{clientURL}/search-notes/note/{id} \nRemark: {remark}'
+    recipient_list = [email]
+    send_custom_email(subject, message, recipient_list)
+
+def send_remove_note_mail(id, note, email, remark):
+    clientURL = 'notemarketplace.netlify.app'
+    subject = f'Note Removed - {note.title}'
+    message = f'{clientURL}/search-notes/note/{id} \nRemark: {remark}'
+    recipient_list = [email]
+    send_custom_email(subject, message, recipient_list)
