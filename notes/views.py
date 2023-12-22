@@ -10,9 +10,9 @@ from django.utils import timezone
 from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerializer, DownloadNoteSerializer,
     BuyerRequestSerializer, DownloadSerializer, AuthNoteSerializer)
 from super_admin.models import Country, NoteCategory, NoteType
-from .models import SellerNotes, Downloads
+from .models import SellerNotes, Downloads, SellerNotesReviews
 from authenticate.models import User
-from django.db.models import Q
+from django.db.models import Q, Avg
 from datetime import datetime
 
 class Note(APIView):
@@ -384,6 +384,11 @@ class NoteDetails(APIView):
         try:
             note_detail = SellerNotes.objects.get(id=note_id)
             serialized_note_detail = NoteSerializer(note_detail).data
+
+            avg_rating = SellerNotesReviews.objects.filter(note=note_detail, is_active=True).aggregate(Avg('rating'))["rating__avg"]
+            serialized_note_detail['avg_rating'] = round(avg_rating) if avg_rating else 0
+            serialized_note_detail['rating_count'] = SellerNotesReviews.objects.filter(note=note_detail, is_active=True).count()
+
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
         except SellerNotes.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
