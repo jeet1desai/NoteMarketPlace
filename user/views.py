@@ -121,6 +121,15 @@ class AdminProfileUpdate(APIView):
         except User.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
 
+class GetReview(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    def get(self, request, note_id, format=None):
+        note = SellerNotes.objects.get(id=note_id)
+        reviews = SellerNotesReviews.objects.filter(note=note, is_active=True)
+
+        serialized_note_review = ReviewSerializer(reviews, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_review}, status=status.HTTP_200_OK)
+
 class Review(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
@@ -151,14 +160,6 @@ class Review(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serializer_review}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-
-    renderer_classes = [renderers.ResponseRenderer]
-    def get(self, request, note_id, format=None):
-        note = SellerNotes.objects.get(id=note_id)
-        reviews = SellerNotesReviews.objects.filter(note=note, is_active=True)
-
-        serialized_note_review = ReviewSerializer(reviews, many=True).data
-        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_review}, status=status.HTTP_200_OK)
 
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
