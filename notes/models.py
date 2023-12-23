@@ -88,6 +88,7 @@ class SellerNotesReportedIssues(models.Model):
     note = models.ForeignKey(SellerNotes, on_delete=models.DO_NOTHING)
     reported_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name='reported_issues')
     against_downloads = models.ForeignKey(Downloads, on_delete=models.DO_NOTHING, related_name='against_downloads_issues')
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return f"{self.note.title}"

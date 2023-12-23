@@ -3,16 +3,16 @@ from rest_framework.views import APIView
 from notemarketplace import renderers, utils
 from rest_framework.permissions import IsAuthenticated
 from django.utils.decorators import method_decorator
-from notemarketplace.decorators import admin_required
+from notemarketplace.decorators import admin_required, normal_required
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
 from datetime import datetime
 from django.utils import timezone
-from notes.models import SellerNotes, Downloads
+from notes.models import SellerNotes, Downloads, SellerNotesReportedIssues
 from authenticate.models import User
 from notes.serializers import NoteSerializer, DownloadSerializer
-from .serializers import (UpdateStatusSerializer, UpdateStatusRemarkSerializer)
+from .serializers import (UpdateStatusSerializer, UpdateStatusRemarkSerializer, AddSpamSerializer, SpamSerializer)
 from user.serializers import UserProfileSerializer
 from django.db.models import Sum
 
@@ -256,3 +256,67 @@ class AllUserNotes(ListAPIView):
 
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_user_notes}, status=status.HTTP_200_OK)
 
+class ReportSpam(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="add spam")
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        serializer = AddSpamSerializer(data=request.data, context={'user': user})
+        if serializer.is_valid():
+            download_id = serializer.validated_data['download_id']
+            remarks = serializer.validated_data['remarks']
+
+            downloaded_note = Downloads.objects.get(id=download_id)
+            note = SellerNotes.objects.get(id=downloaded_note.note.id)
+
+            spam_note = SellerNotesReportedIssues.objects.create(
+                remarks = remarks,
+                note = note,
+                reported_by = user,
+                against_downloads = downloaded_note,
+                created_date = timezone.now(),
+                modified_date = timezone.now(),
+                created_by = user,
+                modified_by = user,
+            )
+            print(spam_note)
+            serializer_spam_note = SpamSerializer(spam_note).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serializer_spam_note}, status=status.HTTP_200_OK)
+        else:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="get spams")
+    def get(self, request, format=None):
+        search_param = request.query_params.get('search', '').lower()
+        spam_notes = SellerNotesReportedIssues.objects.filter(is_active=True)
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                spam_notes = spam_notes.filter(modified_date__date=search_date.date())
+            except ValueError:
+                spam_notes = spam_notes.filter(
+                    Q(note__title__icontains=search_param) | Q(reported_by__first_name__icontains=search_param) |
+                    Q(note__category__name__icontains=search_param) | Q(reported_by__last_name__icontains=search_param) |
+                    Q(remarks__icontains=search_param) 
+                )
+
+        serialized_spam_notes = SpamSerializer(spam_notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_spam_notes}, status=status.HTTP_200_OK)
+    
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="delete review")
+    def delete(self, request, spam_id, format=None):
+        try:
+            spam = SellerNotesReportedIssues.objects.get(id=spam_id)
+            spam.is_active = False
+            spam.save()
+
+            serializer_spam = SpamSerializer(spam).data
+            return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serializer_spam}, status=status.HTTP_200_OK)
+        except SellerNotesReportedIssues.DoesNotExist:
+            return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)

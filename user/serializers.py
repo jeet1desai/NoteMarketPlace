@@ -135,6 +135,6 @@ class AddReviewSerializer(serializers.Serializer):
 
         if not Downloads.objects.filter(id=download_id, downloader=user, is_seller_has_allowed_to_download=True).exists():
             raise serializers.ValidationError("Note is not exist on your download.")
-        if SellerNotesReviews.objects.filter(against_downloads__id=download_id).exists():
+        if SellerNotesReviews.objects.filter(against_downloads__id=download_id, reviewed_by=user).exists():
             raise serializers.ValidationError("Your review exist against this note.")
         return attrs

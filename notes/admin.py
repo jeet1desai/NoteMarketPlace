@@ -17,4 +17,4 @@ class UserModel(admin.ModelAdmin):
 
 @admin.register(SellerNotesReportedIssues)
 class SellerNotesReportedIssuesModel(admin.ModelAdmin):
-    list_display = ("id", "remarks", "note", "reported_by")
+    list_display = ("id", "remarks", "note", "reported_by", "is_active")

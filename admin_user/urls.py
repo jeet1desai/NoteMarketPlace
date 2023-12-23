@@ -15,5 +15,9 @@ urlpatterns = [
 
     path('user_notes/<int:user_id>/', views.AllUserNotes.as_view(), name="all user notes"),
 
-    # stats, report span and span list
+    path('add_spam/', views.ReportSpam.as_view(), name="add spam"),
+    path('get_spams/', views.ReportSpam.as_view(), name="get spam"),
+    path('delete_spam/<int:spam_id>/', views.ReportSpam.as_view(), name="get spam"),
+
+    # stats
 ]
