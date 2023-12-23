@@ -19,5 +19,5 @@ urlpatterns = [
     path('get_spams/', views.ReportSpam.as_view(), name="get spam"),
     path('delete_spam/<int:spam_id>/', views.ReportSpam.as_view(), name="get spam"),
 
-    # stats
+    path('get_stats/', views.Statistic.as_view(), name="get stats"),
 ]

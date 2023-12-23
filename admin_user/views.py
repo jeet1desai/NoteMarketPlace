@@ -7,7 +7,7 @@ from notemarketplace.decorators import admin_required, normal_required
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 from notes.models import SellerNotes, Downloads, SellerNotesReportedIssues
 from authenticate.models import User
@@ -320,3 +320,25 @@ class ReportSpam(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serializer_spam}, status=status.HTTP_200_OK)
         except SellerNotesReportedIssues.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+class Statistic(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(admin_required, name="get stats")
+    def get(self, request, format=None):
+        stats={}
+        notes = SellerNotes.objects.filter(status=3, is_active=True)
+        stats['note_under_review'] = notes.count()
+
+        last_seven_days = timezone.now() - timedelta(days=7)
+        notes_downloaded_last_seven_days = Downloads.objects.filter(
+            attachment_downloaded_date__gte=last_seven_days
+        ).values('note').distinct()
+        stats['note_downloaded'] = notes_downloaded_last_seven_days.count()
+
+        new_member_registrations_last_seven_days = User.objects.filter(
+            created_date__gte=last_seven_days
+        ).count()
+        stats['new_member'] = new_member_registrations_last_seven_days
+
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': stats}, status=status.HTTP_200_OK)

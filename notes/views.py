@@ -12,7 +12,7 @@ from .serializers import (NotePostPutSerializer, NoteSerializer, CloneNoteSerial
 from super_admin.models import Country, NoteCategory, NoteType
 from .models import SellerNotes, Downloads, SellerNotesReviews, SellerNotesReportedIssues
 from authenticate.models import User
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Sum
 from datetime import datetime
 
 class Note(APIView):
@@ -235,6 +235,7 @@ class DownloadNote(APIView):
                     seller=seller_user,
                     downloader=user,
                     attachment_downloaded_date=timezone.now(),
+                    is_attachment_downloaded=True,
                 )
                 utils.send_buyer_download_mail(user, seller_user, original_note)
                 utils.send_seller_download_mail(seller_user, user, original_note)
@@ -406,3 +407,23 @@ class AuthNoteDetails(APIView):
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_note_detail}, status=status.HTTP_200_OK)
         except SellerNotes.DoesNotExist:
             return Response({ 'status': status.HTTP_404_NOT_FOUND, 'msg': "Not Found"}, status=status.HTTP_404_NOT_FOUND)
+
+class Statistic(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    permission_classes = [IsAuthenticated]
+    @method_decorator(normal_required, name="get stats")
+    def get(self, request, format=None):
+        user = self.request.user
+        stats={}
+        buyer_request_notes = Downloads.objects.filter(seller=user, note__is_paid=True, is_seller_has_allowed_to_download=False)
+        stats['buyer_request'] = buyer_request_notes.count()
+        rejected_notes = SellerNotes.objects.filter(status=5, seller=user)
+        stats['rejected_notes'] = rejected_notes.count()
+        download_notes = Downloads.objects.filter(downloader=user, is_seller_has_allowed_to_download=True)
+        stats['download_notes'] = download_notes.count()
+        sold_notes = SellerNotes.objects.filter(downloads__is_attachment_downloaded=True, seller=user).distinct()
+        stats['sold_notes'] = sold_notes.count()
+        total_earnings = SellerNotes.objects.filter(downloads__is_attachment_downloaded=True, seller=user).aggregate(total=Sum('selling_price'))['total'] or 0
+        stats['total_earnings'] = total_earnings
+
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': stats}, status=status.HTTP_200_OK)
