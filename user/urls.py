@@ -18,4 +18,6 @@ urlpatterns = [
 
     path('sellers/', views.Seller.as_view(), name="seller"),
     path('buyers/', views.Buyer.as_view(), name="buyer"),
+
+    path('note_list/', views.AllApprovedNote.as_view(), name="get stats"),
 ]

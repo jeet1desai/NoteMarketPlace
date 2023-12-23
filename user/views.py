@@ -13,6 +13,7 @@ from super_admin.models import Country, NoteCategory, NoteType
 from authenticate.models import User
 from django.utils import timezone
 from notes.models import Downloads, SellerNotes, SellerNotesReviews
+from notes.serializers import NoteSerializer
 
 class ContactUs(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -195,3 +196,10 @@ class Buyer(APIView):
         ).distinct()
         serialized_user = UserSerializer(downloaded_buyers, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serialized_user}, status=status.HTTP_200_OK)
+    
+class AllApprovedNote(APIView):
+    renderer_classes = [renderers.ResponseRenderer]
+    def get(self, request, format=None):
+        notes = SellerNotes.objects.filter(status=4, is_active=True)
+        serialized_notes = NoteSerializer(notes, many=True).data
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_notes}, status=status.HTTP_200_OK)

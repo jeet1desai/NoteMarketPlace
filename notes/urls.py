@@ -24,6 +24,4 @@ urlpatterns = [
     path('get_auth_note/<int:note_id>/', views.AuthNoteDetails.as_view(), name="get auth note"),
 
     path('get_stats/', views.Statistic.as_view(), name="get stats"),
-
-    # note list (with all search and filter)
 ]
