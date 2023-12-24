@@ -22,6 +22,8 @@ class NoteUnderReview(ListAPIView):
     @method_decorator(admin_required, name="note under review")
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
+        seller_param = request.query_params.get('seller', '').lower()
+
         notes = SellerNotes.objects.filter(status__in=[2, 3])
         if search_param:
             try:
@@ -37,6 +39,10 @@ class NoteUnderReview(ListAPIView):
                         Q(title__icontains=search_param) | Q(seller__first_name__icontains=search_param) |
                         Q(category__name__icontains=search_param) | Q(seller__last_name__icontains=search_param)
                     )
+
+        if seller_param:
+            notes = notes.filter(Q(seller__id=int(seller_param)))
+
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
 
@@ -46,8 +52,9 @@ class PublishedNotes(ListAPIView):
     @method_decorator(admin_required, name="published note")
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
+        seller_param = request.query_params.get('seller', '').lower()
+
         notes = SellerNotes.objects.filter(status=4)
-        
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
@@ -64,6 +71,9 @@ class PublishedNotes(ListAPIView):
                         Q(selling_price__icontains=search_param) | Q(actioned_by__last_name__icontains=search_param) |
                         Q(actioned_by__first_name__icontains=search_param)
                     )
+        
+        if seller_param:
+            notes = notes.filter(Q(seller__id=int(seller_param)))
 
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
         for note_data in serialized_in_progress_note:
@@ -191,6 +201,9 @@ class DownloadedNotes(ListAPIView):
     @method_decorator(admin_required, name="downloaded notes")
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
+        seller_param = request.query_params.get('seller', '').lower()
+        buyer_param = request.query_params.get('buyer', '').lower()
+
         downloaded_notes = Downloads.objects.filter(is_attachment_downloaded=True)
         if search_param:
             try:
@@ -208,6 +221,13 @@ class DownloadedNotes(ListAPIView):
                         Q(downloader__first_name__icontains=search_param) | Q(downloader__first_name__icontains=search_param) |
                         Q(note__selling_price__icontains=search_param)
                     )
+
+        if seller_param:
+            downloaded_notes = downloaded_notes.filter(Q(seller__id=int(seller_param)))
+
+        if buyer_param:
+            downloaded_notes = downloaded_notes.filter(Q(downloader__id=int(buyer_param)))
+        
         serialized_downloaded_notes = DownloadSerializer(downloaded_notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_downloaded_notes}, status=status.HTTP_200_OK)
 
@@ -217,8 +237,9 @@ class RejectedNotes(ListAPIView):
     @method_decorator(admin_required, name="rejected note")
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
-        notes = SellerNotes.objects.filter(status=5)
+        seller_param = request.query_params.get('seller', '').lower()
 
+        notes = SellerNotes.objects.filter(status=5)
         if search_param:
             try:
                 search_date = datetime.strptime(search_param, "%Y-%m-%d")
@@ -235,6 +256,9 @@ class RejectedNotes(ListAPIView):
                         Q(admin_remark__icontains=search_param) | Q(actioned_by__last_name__icontains=search_param) |
                         Q(actioned_by__first_name__icontains=search_param)
                     )
+
+        if seller_param:
+            notes = notes.filter(Q(seller__id=int(seller_param)))
 
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_in_progress_note}, status=status.HTTP_200_OK)
