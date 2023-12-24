@@ -53,6 +53,7 @@ class PublishedNotes(ListAPIView):
     def get(self, request, format=None):
         search_param = request.query_params.get('search', '').lower()
         seller_param = request.query_params.get('seller', '').lower()
+        months_param = request.query_params.get('months', None)
 
         notes = SellerNotes.objects.filter(status=4)
         if search_param:
@@ -74,6 +75,11 @@ class PublishedNotes(ListAPIView):
         
         if seller_param:
             notes = notes.filter(Q(seller__id=int(seller_param)))
+
+        if months_param:
+            months = int(months_param)
+            start_date = timezone.now() - timedelta(days=months * 30)
+            notes = notes.filter(published_date__gte=start_date)
 
         serialized_in_progress_note = NoteSerializer(notes, many=True).data
         for note_data in serialized_in_progress_note:
