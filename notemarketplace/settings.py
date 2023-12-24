@@ -151,6 +151,8 @@ EMAIL_HOST_PASSWORD = 'cefaddgttdzondqu'
 USER_ID_FIELD = 'id'
 
 REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'notemarketplace.pagination.CustomPagination',
+    'PAGE_SIZE': 10,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.permissions.IsAuthenticated',
         'rest_framework_simplejwt.authentication.JWTAuthentication',

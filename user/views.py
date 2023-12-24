@@ -12,8 +12,11 @@ from django.utils.decorators import method_decorator
 from super_admin.models import Country, NoteCategory, NoteType
 from authenticate.models import User
 from django.utils import timezone
-from notes.models import Downloads, SellerNotes, SellerNotesReviews
+from datetime import datetime
+from notes.models import Downloads, SellerNotes, SellerNotesReviews, SellerNotesReportedIssues
 from notes.serializers import NoteSerializer
+from django.db.models import Avg, Q
+from notemarketplace.pagination import CustomPagination
 
 class ContactUs(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -196,10 +199,56 @@ class Buyer(APIView):
         ).distinct()
         serialized_user = UserSerializer(downloaded_buyers, many=True).data
         return Response({ 'status': status.HTTP_200_OK, 'msg': 'Success', 'data': serialized_user}, status=status.HTTP_200_OK)
-    
+
 class AllApprovedNote(APIView):
+    pagination_class = CustomPagination
     renderer_classes = [renderers.ResponseRenderer]
     def get(self, request, format=None):
+        paginator = self.pagination_class()
+        search_param = request.query_params.get('search', '').lower()
+        country_param = request.query_params.get('country', '').lower()
+        category_param = request.query_params.get('category', '').lower()
+        type_param = request.query_params.get('type', '').lower()
+
         notes = SellerNotes.objects.filter(status=4, is_active=True)
+
+        if search_param:
+            try:
+                search_date = datetime.strptime(search_param, "%Y-%m-%d")
+                notes = notes.filter(published_date__date=search_date.date())
+            except ValueError:
+                status_mapping = {'paid': True, 'free': False}
+                if search_param in status_mapping:
+                    status_value = status_mapping[search_param]
+                    notes = notes.filter(is_paid=status_value)
+                elif search_param.isdigit():
+                    notes = notes.filter(selling_price=int(search_param))
+                else:   
+                    notes = notes.filter(
+                        Q(title__icontains=search_param) | Q(note_type__name__icontains=search_param) |
+                        Q(category__name__icontains=search_param) | Q(country__name__icontains=search_param) |
+                        Q(university_name__icontains=search_param) | Q(course__icontains=search_param) | 
+                        Q(professor__icontains=search_param) | Q(description__icontains=search_param) | 
+                        Q(course_code__icontains=search_param)
+                    )
+
+        if country_param:
+            notes = notes.filter(Q(country__id=int(country_param)))
+        if category_param:
+            notes = notes.filter(Q(category__id=int(category_param)))
+        if type_param:
+            notes = notes.filter(Q(note_type__id=int(type_param)))
+
+        notes = paginator.paginate_queryset(notes, request)
+        page = paginator.get_paginated_response(notes)
+
         serialized_notes = NoteSerializer(notes, many=True).data
-        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_notes}, status=status.HTTP_200_OK)
+
+        for note_data in serialized_notes:
+            note_id = note_data["id"]
+            avg_rating = SellerNotesReviews.objects.filter(note__id=note_id, is_active=True).aggregate(Avg('rating'))["rating__avg"]
+            note_data['avg_rating'] = round(avg_rating) if avg_rating else 0
+            note_data['rating_count'] = SellerNotesReviews.objects.filter(note__id=note_id, is_active=True).count()
+            note_data['spam_count'] = SellerNotesReportedIssues.objects.filter(note__id=note_id, is_active=True).count()
+
+        return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_notes, "pagination": page}, status=status.HTTP_200_OK)
