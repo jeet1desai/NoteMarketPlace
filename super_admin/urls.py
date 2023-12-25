@@ -3,8 +3,8 @@ from . import views
 
 urlpatterns = [
     # config
-    path('config_get/', views.Configuration.as_view(), name="config get"),
-    path('config_post/', views.Configuration.as_view(), name="config post"),
+    path('config_get/', views.GetConfiguration.as_view(), name="config get"),
+    path('config_post/', views.PostConfiguration.as_view(), name="config post"),
     # admin
     path('admins/', views.Admin.as_view(), name="admins get"),
     path('admin/<int:admin_id>/', views.Admin.as_view(), name="admin get"),

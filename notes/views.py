@@ -14,6 +14,7 @@ from .models import SellerNotes, Downloads, SellerNotesReviews, SellerNotesRepor
 from authenticate.models import User
 from django.db.models import Q, Avg, Sum
 from datetime import datetime
+from super_admin.models import SystemConfigurations
 
 class Note(APIView):
     renderer_classes = [renderers.ResponseRenderer]
@@ -23,6 +24,7 @@ class Note(APIView):
         user = request.user
         serializer = NotePostPutSerializer(data=request.data)
         if serializer.is_valid():
+            config = SystemConfigurations.objects.last()
             category = serializer.validated_data.pop('category')
             country = serializer.validated_data.pop('country')
             note_type = serializer.validated_data.pop('note_type')
@@ -33,7 +35,7 @@ class Note(APIView):
             type_instance = NoteType.objects.get(id=int(note_type)) if note_type != "" else None
 
             if display_picture == "":
-                serializer.validated_data['display_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+                serializer.validated_data['display_picture'] = config.note_picture
             else:
                 serializer.validated_data['display_picture'] = display_picture
             
@@ -63,6 +65,7 @@ class Note(APIView):
             note = SellerNotes.objects.get(id=note_id, seller=user)
             serializer = NotePostPutSerializer(note, data=request.data)
             if serializer.is_valid():
+                config = SystemConfigurations.objects.last()
                 category = serializer.validated_data.pop('category')
                 country = serializer.validated_data.pop('country')
                 note_type = serializer.validated_data.pop('note_type')
@@ -73,7 +76,7 @@ class Note(APIView):
                 type_instance = NoteType.objects.get(id=int(note_type)) if note_type != "" else None
 
                 if display_picture == "":
-                    serializer.validated_data['display_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+                    serializer.validated_data['display_picture'] = config.note_picture
                 else:
                     serializer.validated_data['display_picture'] = display_picture
                 

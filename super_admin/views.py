@@ -5,7 +5,7 @@ from authenticate.models import User
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .serializers import (ConfigGetSerializer, ConfigPostSerializer, AdminGetSerializer, CategoryPostSerializer,
+from .serializers import (ConfigSerializer, AdminGetSerializer, CategoryPostSerializer,
     CountryGetSerializer, CategoryGetSerializer, TypeGetSerializer, CountryPostSerializer, TypePostSerializer, 
     AdminPostSerializer, AdminPutSerializer, CountryPutSerializer)
 from notemarketplace.decorators import super_admin_required, admin_required
@@ -18,24 +18,23 @@ import string
 from django.db.models import Q
 
 # Config
-class Configuration(APIView):
+class GetConfiguration(APIView):
     renderer_classes = [renderers.ResponseRenderer]
-    permission_classes = [IsAuthenticated]
-    @method_decorator(super_admin_required, name="get config")
     def get(self, request, format=None):
         last_row = SystemConfigurations.objects.last()
         if last_row is None:
            empty_config = {'email': '','phone_number': '', 'facebook_url': '', 'twitter_url': '', 'linkedIn_url': '', 'profile_picture': '', 'note_picture': ''}
            return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': empty_config}, status=status.HTTP_200_OK)
         else:
-            serialized_config = ConfigGetSerializer(last_row).data
+            serialized_config = ConfigSerializer(last_row).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_config}, status=status.HTTP_200_OK)
     
+class PostConfiguration(APIView):
     renderer_classes = [renderers.ResponseRenderer]
     permission_classes = [IsAuthenticated]
     @method_decorator(super_admin_required, name="post config")
     def post(self, request, format=None):
-        serializer = ConfigPostSerializer(data=request.data)
+        serializer = ConfigSerializer(data=request.data)
         if serializer.is_valid():
             profile_picture = serializer.validated_data.pop('profile_picture')
             note_picture = serializer.validated_data.pop('note_picture')
@@ -46,13 +45,13 @@ class Configuration(APIView):
                 serializer.validated_data['profile_picture'] = profile_picture
 
             if note_picture == "":
-                serializer.validated_data['note_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+                serializer.validated_data['note_picture'] = "https://shorturl.at/orBVW"
             else:
                 serializer.validated_data['note_picture'] = note_picture
 
             serializer.validated_data['created_by'] = request.user
             config = serializer.save()
-            serialized_config = ConfigPostSerializer(config).data
+            serialized_config = ConfigSerializer(config).data
             return Response({ 'status': status.HTTP_200_OK, 'msg': "Success", 'data': serialized_config}, status=status.HTTP_200_OK)
         else:
             return Response({ 'status': status.HTTP_400_BAD_REQUEST, 'msg': serializer.errors }, status=status.HTTP_400_BAD_REQUEST)
@@ -96,13 +95,14 @@ class Admin(APIView):
     def post(self, request, format=None):
         serializer = AdminPostSerializer(data=request.data)
         if serializer.is_valid():
+            config = SystemConfigurations.objects.last()
             phone_country_code = serializer.validated_data.pop('phone_country_code')
             country_instance = Country.objects.get(id=phone_country_code)
 
             random_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
 
             serializer.validated_data['phone_country_code'] = country_instance
-            serializer.validated_data['profile_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+            serializer.validated_data['profile_picture'] = config.profile_picture
             serializer.validated_data['created_by'] = request.user
             serializer.validated_data['modified_by'] = request.user
             serializer.validated_data['created_date'] = timezone.now()

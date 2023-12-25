@@ -4,26 +4,11 @@ from authenticate.models import User
 from user.serializers import UserSerializer, CountrySerializer
 
 # Config
-class ConfigGetSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SystemConfigurations
-        fields = '__all__'
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['created_by'] = UserSerializer(instance.created_by).data
-        return representation
-
-class ConfigPostSerializer(serializers.ModelSerializer):
+class ConfigSerializer(serializers.ModelSerializer):
     class Meta:
         model = SystemConfigurations
         fields = '__all__'
         extra_kwargs = {'created_by': {'required': False}}
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['created_by'] = UserSerializer(instance.created_by).data
-        return representation
 
 # Admin
 class AdminGetSerializer(serializers.ModelSerializer):

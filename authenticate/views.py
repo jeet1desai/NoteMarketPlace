@@ -10,6 +10,7 @@ import random
 import string
 from notemarketplace.decorators import normal_required
 from django.utils.decorators import method_decorator
+from super_admin.models import SystemConfigurations
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -24,7 +25,8 @@ class Register(APIView):
     def post(self, request, format=None):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.validated_data['profile_picture'] = "https://img.freepik.com/premium-vector/man-avatar-profile-picture-vector-illustration_268834-538.jpg"
+            config = SystemConfigurations.objects.last()
+            serializer.validated_data['profile_picture'] = config.profile_picture
             # Create the user
             user = serializer.save()
             serialized_user = RegisterSerializer(user).data
